@@ -2,23 +2,89 @@ package com.example.admin.rxjavatestapplication;
 
 
 import android.content.Context;
-import android.support.annotation.NonNull;
-import android.util.Log;
+import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.BaseAdapter;
 import android.widget.TextView;
 
-import com.example.admin.rxjavatestapplication.model.Album;
 import com.example.admin.rxjavatestapplication.model.Item;
 import com.google.common.collect.ImmutableList;
 
 import java.util.List;
 
-public class MyListViewAdapter extends BaseAdapter{
+import javax.annotation.Nonnull;
+
+import butterknife.ButterKnife;
+import butterknife.InjectView;
+import rx.Observable;
+import rx.Observer;
+import rx.android.view.OnClickEvent;
+import rx.android.view.ViewObservable;
+import rx.functions.Func1;
+
+public class MyListViewAdapter extends RecyclerView.Adapter<MyListViewAdapter.MyViewHolder> {
 
     private List<Item> mItems = ImmutableList.of();
+
+    @Nonnull
+    private final Context mContext;
+    @Nonnull
+    private Observer<String> mSelectedItemObserver;
+
+    public MyListViewAdapter(@Nonnull Context mContext, @Nonnull Observer<String> selectedItemObserver) {
+        this.mContext = mContext;
+        mSelectedItemObserver = selectedItemObserver;
+    }
+
+    public void setData(List<Item> items) {
+        mItems = items;
+        notifyDataSetChanged();
+    }
+
+    public class MyViewHolder extends RecyclerView.ViewHolder {
+        @InjectView(android.R.id.text1)
+        TextView mTextView;
+
+        public MyViewHolder(View itemView) {
+            super(itemView);
+            ButterKnife.inject(this, itemView);
+
+
+        }
+
+        public void bindData(final Item item) {
+            mTextView.setText(item.getAlbum().getName());
+            ViewObservable.clicks(itemView)
+                    .flatMap(new Func1<OnClickEvent, Observable<String>>() {
+                        @Override
+                        public Observable<String> call(OnClickEvent onClickEvent) {
+                            return Observable.just(item.getAlbum().getId());
+                        }
+                    })
+                    .subscribe(mSelectedItemObserver);
+        }
+    }
+
+
+    @Override
+    public MyListViewAdapter.MyViewHolder onCreateViewHolder(ViewGroup viewGroup, int i) {
+        final View view = LayoutInflater.from(mContext)
+                .inflate(android.R.layout.simple_list_item_1, viewGroup, false);
+        return new MyViewHolder(view);
+    }
+
+    @Override
+    public void onBindViewHolder(MyListViewAdapter.MyViewHolder viewHolder, int position) {
+        viewHolder.bindData(mItems.get(position));
+    }
+
+    @Override
+    public int getItemCount() {
+        return mItems.size();
+    }
+
+/*    private List<Item> mItems = ImmutableList.of();
 
     @NonNull
     private final Context mContext;
@@ -65,7 +131,5 @@ public class MyListViewAdapter extends BaseAdapter{
                 .build();
         mItems = newList;
         notifyDataSetChanged();
-    }
-
-
+    }*/
 }

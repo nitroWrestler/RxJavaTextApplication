@@ -12,7 +12,7 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent">
 
-            <ListView
+            <android.support.v7.widget.RecyclerView
                 android:id="@+id/listView"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content" />
@@ -29,6 +29,21 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"/>
+        </FrameLayout>
+
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:id="@+id/viewRefreshData"
+            android:background="#FAFAFA"
+            android:visibility="gone">
+
+            <Button
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/button_refreshData"
+                android:layout_gravity="center"
+                android:id="@+id/bRefreshData"/>
         </FrameLayout>
     </FrameLayout>
 

@@ -1,18 +1,25 @@
 package com.example.admin.rxjavatestapplication;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import javax.inject.Inject;
-
-import android.util.Log;
 
 import com.example.admin.rxjavatestapplication.model.SpotifyResponse;
 import com.example.admin.rxjavatestapplication.schedulers.ObserveOnScheduler;
 import com.example.admin.rxjavatestapplication.schedulers.SubscribeOnScheduler;
 
+import rx.Observable;
+import rx.Observer;
 import rx.Scheduler;
 import rx.functions.Action1;
+import rx.observers.Observers;
+import rx.subjects.PublishSubject;
+import rx.subjects.Subject;
 
 public class RetrofitPresenter {
+
+    @Nonnull
+    private final Subject<AdapterItem, AdapterItem> openDetailsSubject = PublishSubject.create();
 
     private Listener listener;
     private final MyRetroFit myRetroFit;
@@ -20,9 +27,9 @@ public class RetrofitPresenter {
     private final Scheduler subscribeOnScheduler;
 
     @Inject
-    public RetrofitPresenter(MyRetroFit retroFit,
+    public RetrofitPresenter(@Nonnull MyRetroFit retroFit,
                              @ObserveOnScheduler Scheduler observeOnScheduler,
-                             @SubscribeOnScheduler Scheduler subscribeOnScheduler) { // TODO pass schedulers
+                             @SubscribeOnScheduler Scheduler subscribeOnScheduler) {
         myRetroFit = retroFit;
         this.observeOnScheduler = observeOnScheduler;
         this.subscribeOnScheduler = subscribeOnScheduler;
@@ -31,12 +38,11 @@ public class RetrofitPresenter {
     public void register(@Nonnull final Listener listener) {
         this.listener = listener;
 
-        listener.showProgress(true);
-
-        listTracks();
+        listTracksPresenter();
     }
 
-    public void listTracks() {
+    public void listTracksPresenter() {
+        listener.showProgress(true);
         myRetroFit.listTracks()
                 .subscribeOn(subscribeOnScheduler)
                 .observeOn(observeOnScheduler)
@@ -49,9 +55,54 @@ public class RetrofitPresenter {
                 }, new Action1<Throwable>() {
                     @Override
                     public void call(Throwable throwable) {
-                        Log.e("Error", "bind data", throwable);
+                        listener.showButtonView(true);
+                        listener.showProgress(false);
                     }
                 });
+    }
+
+    public void refreshClick() {
+        listener.showButtonView(false);
+        listTracksPresenter();
+    }
+
+    @Nonnull
+    public Observable<AdapterItem> openDetailsObservable() {
+        return openDetailsSubject;
+    }
+
+    public class AdapterItem {
+
+        @Nonnull
+        private final String id;
+        @Nullable
+        private final String text;
+
+        public AdapterItem(@Nonnull String id,
+                           @Nullable String text) {
+            this.id = id;
+            this.text = text;
+        }
+
+        @Nonnull
+        public String getId() {
+            return id;
+        }
+
+        @Nullable
+        public String getText() {
+            return text;
+        }
+
+        @Nonnull
+        public Observer<Object> clickObserver() {
+            return Observers.create(new Action1<Object>() {
+                @Override
+                public void call(Object o) {
+                    openDetailsSubject.onNext(AdapterItem.this);
+                }
+            });
+        }
     }
 
     public static interface Listener {
@@ -59,6 +110,35 @@ public class RetrofitPresenter {
         void showProgress(boolean showProgress);
 
         void updateData(SpotifyResponse spotifyResponse);
-    }
 
+        void showButtonView(boolean showButtonView);
+    }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
