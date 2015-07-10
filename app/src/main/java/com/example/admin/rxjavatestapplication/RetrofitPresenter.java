@@ -1,25 +1,33 @@
 package com.example.admin.rxjavatestapplication;
 
+import android.util.Log;
+
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 
+import com.example.admin.rxjavatestapplication.model.Item;
 import com.example.admin.rxjavatestapplication.model.SpotifyResponse;
 import com.example.admin.rxjavatestapplication.schedulers.ObserveOnScheduler;
 import com.example.admin.rxjavatestapplication.schedulers.SubscribeOnScheduler;
+import com.google.common.base.Function;
+import com.google.common.collect.Lists;
+
+import java.util.List;
 
 import rx.Observable;
 import rx.Observer;
 import rx.Scheduler;
+import rx.Subscriber;
 import rx.functions.Action1;
+import rx.functions.Func1;
 import rx.observers.Observers;
 import rx.subjects.PublishSubject;
-import rx.subjects.Subject;
 
 public class RetrofitPresenter {
 
     @Nonnull
-    private final Subject<AdapterItem, AdapterItem> openDetailsSubject = PublishSubject.create();
+    private final PublishSubject<AdapterItem> openDetailsSubject = PublishSubject.create();
 
     private Listener listener;
     private final MyRetroFit myRetroFit;
@@ -44,11 +52,24 @@ public class RetrofitPresenter {
     public void listTracksPresenter() {
         listener.showProgress(true);
         myRetroFit.listTracks()
+                .map(new Func1<SpotifyResponse, List<AdapterItem>>() {
+                    @Override
+                    public List<AdapterItem> call(SpotifyResponse spotifyResponse) {
+                        return Lists.transform(spotifyResponse.getTracks().getItems(),
+                                new Function<Item, AdapterItem>() {
+                                    @Nullable
+                                    @Override
+                                    public AdapterItem apply(@Nullable Item item) {
+                                        return new AdapterItem(item.getAlbum().getId(), item.getAlbum().getName());
+                                    }
+                                });
+                    }
+                })
                 .subscribeOn(subscribeOnScheduler)
                 .observeOn(observeOnScheduler)
-                .subscribe(new Action1<SpotifyResponse>() {
+                .subscribe(new Action1<List<AdapterItem>>() {
                     @Override
-                    public void call(SpotifyResponse spotifyResponse) {
+                    public void call(List<AdapterItem> spotifyResponse) {
                         listener.updateData(spotifyResponse);
                         listener.showProgress(false);
                     }
@@ -71,17 +92,18 @@ public class RetrofitPresenter {
         return openDetailsSubject;
     }
 
+
     public class AdapterItem {
 
         @Nonnull
         private final String id;
         @Nullable
-        private final String text;
+        private final String name;
 
         public AdapterItem(@Nonnull String id,
-                           @Nullable String text) {
+                           @Nullable String name) {
             this.id = id;
-            this.text = text;
+            this.name = name;
         }
 
         @Nonnull
@@ -90,8 +112,8 @@ public class RetrofitPresenter {
         }
 
         @Nullable
-        public String getText() {
-            return text;
+        public String getName() {
+            return name;
         }
 
         @Nonnull
@@ -105,11 +127,11 @@ public class RetrofitPresenter {
         }
     }
 
-    public static interface Listener {
+    public interface Listener {
 
         void showProgress(boolean showProgress);
 
-        void updateData(SpotifyResponse spotifyResponse);
+        void updateData(List<AdapterItem> spotifyResponse);
 
         void showButtonView(boolean showButtonView);
     }

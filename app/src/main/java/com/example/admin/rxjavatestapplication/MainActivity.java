@@ -6,18 +6,14 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.ActivityOptionsCompat;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
-import android.widget.ListView;
-
-import com.example.admin.rxjavatestapplication.model.Item;
-import com.example.admin.rxjavatestapplication.model.SpotifyResponse;
 
 import java.util.List;
 
 import javax.annotation.Nonnull;
 
-import rx.Observer;
 import rx.functions.Action1;
 
 public class MainActivity extends Activity {
@@ -25,22 +21,6 @@ public class MainActivity extends Activity {
     private MyListViewAdapter myListViewAdapter;
 
     private RetrofitPresenter presenter;
-    private Observer<String> mSelectedItemObserver = new Observer<String>() {
-        @Override
-        public void onCompleted() {
-
-        }
-
-        @Override
-        public void onError(Throwable e) {
-
-        }
-
-        @Override
-        public void onNext(String id) {
-            startActivity(DetailsActivity.getIntent(MainActivity.this, id));
-        }
-    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -54,8 +34,7 @@ public class MainActivity extends Activity {
         final View buttonView = findViewById(R.id.viewRefreshData);
         final Button bRefreshData = (Button) findViewById(R.id.bRefreshData);
 
-
-        myListViewAdapter = new MyListViewAdapter(this, mSelectedItemObserver);
+        myListViewAdapter = new MyListViewAdapter(this);
         listView.setAdapter(myListViewAdapter);
 
         presenter = MainApplication
@@ -72,9 +51,10 @@ public class MainActivity extends Activity {
             }
 
             @Override
-            public void updateData(SpotifyResponse spotifyResponse) {
-                List<Item> items = spotifyResponse.getTracks().getItems();
+            public void updateData(List<RetrofitPresenter.AdapterItem> spotifyResponse) {
+                List<RetrofitPresenter.AdapterItem> items = spotifyResponse;
                 myListViewAdapter.setData(items);
+                Log.w("ITEMS", items.toString());
             }
 
             @Override
