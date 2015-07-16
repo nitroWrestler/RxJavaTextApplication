@@ -1,6 +1,8 @@
 package com.example.admin.rxjavatestapplication;
 
 
+import com.appunite.rx.ObservableExtensions;
+import com.appunite.rx.ResponseOrError;
 import com.example.admin.rxjavatestapplication.model.Item;
 import com.example.admin.rxjavatestapplication.model.SpotifyResponse;
 import com.example.admin.rxjavatestapplication.schedulers.ObserveOnScheduler;
@@ -18,6 +20,8 @@ import rx.Observable;
 import rx.Scheduler;
 import rx.functions.Func1;
 import rx.subjects.BehaviorSubject;
+import rx.subjects.PublishSubject;
+import rx.subjects.ReplaySubject;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -46,7 +50,7 @@ public class DetailsPresenter {
     public class DetailsPresenterFromId {
 
         private final BehaviorSubject<AdapterItemDetails> mRequestSubject = BehaviorSubject.create();
-        private final Observable<String> mNameObservable, mIdObservable, mDurationObservable,
+        private final Observable<ResponseOrError<String>> mNameObservable, mIdObservable, mDurationObservable,
                 mPopularityObservable, mCdCoverImage;
 
         public DetailsPresenterFromId(@Nonnull final String id) {
@@ -88,67 +92,87 @@ public class DetailsPresenter {
                     .subscribe(mRequestSubject);
 
             mNameObservable = mRequestSubject
-                    .flatMap(new Func1<AdapterItemDetails, Observable<String>>() {
+                    .compose(ResponseOrError.<AdapterItemDetails>toResponseOrErrorObservable())
+                    .compose(ResponseOrError.flatMap(new Func1<AdapterItemDetails, Observable<ResponseOrError<String>>>() {
                         @Override
-                        public Observable<String> call(AdapterItemDetails adapterItemDetails) {
-                            return Observable.just("Name of song:\n" + adapterItemDetails.getName());
+                        public Observable<ResponseOrError<String>> call(AdapterItemDetails adapterItemDetails) {
+                            return Observable.just(ResponseOrError.fromData("Name of song:\n" + adapterItemDetails.getName()));
                         }
-                    });
+                    })).compose(ObservableExtensions.<ResponseOrError<String>>behaviorRefCount());
 
             mIdObservable = mRequestSubject
-                    .flatMap(new Func1<AdapterItemDetails, Observable<String>>() {
+                    .compose(ResponseOrError.<AdapterItemDetails>toResponseOrErrorObservable())
+                    .compose(ResponseOrError.flatMap(new Func1<AdapterItemDetails, Observable<ResponseOrError<String>>>() {
                         @Override
-                        public Observable<String> call(AdapterItemDetails adapterItemDetails) {
-                            return Observable.just("Id of song:\n" + adapterItemDetails.getId());
+                        public Observable<ResponseOrError<String>> call(AdapterItemDetails adapterItemDetails) {
+                            return Observable.just(ResponseOrError.fromData("Id of song:\n" + adapterItemDetails.getId()));
                         }
-                    });
+                    })).compose(ObservableExtensions.<ResponseOrError<String>>behaviorRefCount());
 
             mDurationObservable = mRequestSubject
-                    .flatMap(new Func1<AdapterItemDetails, Observable<String>>() {
-                                 @Override
-                                 public Observable<String> call(AdapterItemDetails adapterItemDetails) {
-                                     return Observable.just("Duration of song:\n" + adapterItemDetails.getDuration_ms());
-                                 }
-                             }
-                    );
+                    .compose(ResponseOrError.<AdapterItemDetails>toResponseOrErrorObservable())
+                    .compose(ResponseOrError.flatMap(new Func1<AdapterItemDetails, Observable<ResponseOrError<String>>>() {
+                        @Override
+                        public Observable<ResponseOrError<String>> call(AdapterItemDetails adapterItemDetails) {
+                            return Observable.just(ResponseOrError.fromData("Duration of song:\n" + adapterItemDetails.getDuration_ms()));
+                        }
+                    })).compose(ObservableExtensions.<ResponseOrError<String>>behaviorRefCount());
 
             mPopularityObservable = mRequestSubject
-                    .flatMap(new Func1<AdapterItemDetails, Observable<String>>() {
+                    .compose(ResponseOrError.<AdapterItemDetails>toResponseOrErrorObservable())
+                    .compose(ResponseOrError.flatMap(new Func1<AdapterItemDetails, Observable<ResponseOrError<String>>>() {
                         @Override
-                        public Observable<String> call(AdapterItemDetails adapterItemDetails) {
-                            return Observable.just("Popularity of song:\n" + adapterItemDetails.getPopularity());
+                        public Observable<ResponseOrError<String>> call(AdapterItemDetails adapterItemDetails) {
+                            return Observable.just(ResponseOrError.fromData("Popularity of song:\n" + adapterItemDetails.getPopularity()));
                         }
-                    });
+                    })).compose(ObservableExtensions.<ResponseOrError<String>>behaviorRefCount());
 
             mCdCoverImage = mRequestSubject
-                    .flatMap(new Func1<AdapterItemDetails, Observable<String>>() {
+                    .compose(ResponseOrError.<AdapterItemDetails>toResponseOrErrorObservable())
+                    .compose(ResponseOrError.flatMap(new Func1<AdapterItemDetails, Observable<ResponseOrError<String>>>() {
                         @Override
-                        public Observable<String> call(AdapterItemDetails adapterItemDetails) {
-                            return Observable.just(adapterItemDetails.getUrlList().get(0).getUrl());
+                        public Observable<ResponseOrError<String>> call(AdapterItemDetails adapterItemDetails) {
+                            return Observable.just(ResponseOrError.fromData(adapterItemDetails.getUrlList().get(0).getUrl()));
                         }
-                    });
+                    })).compose(ObservableExtensions.<ResponseOrError<String>>behaviorRefCount());
         }
 
         public Observable<String> nameObservable() {
-            return mNameObservable;
+            return mNameObservable
+                    .compose(ResponseOrError.<String>onlySuccess());
         }
 
         public Observable<String> idObservable() {
-            return mIdObservable;
+            return mIdObservable
+                    .compose(ResponseOrError.<String>onlySuccess());
         }
 
         public Observable<String> durationObservable() {
-            return mDurationObservable;
+            return mDurationObservable
+                    .compose(ResponseOrError.<String>onlySuccess());
         }
 
         public Observable<String> popularityObservable() {
-            return mPopularityObservable;
+            return mPopularityObservable
+                    .compose(ResponseOrError.<String>onlySuccess());
         }
 
         public Observable<String> cdCoverImageObservable() {
-            return mCdCoverImage;
+            return mCdCoverImage
+                    .compose(ResponseOrError.<String>onlySuccess());
         }
     }
 
 
 }
+
+
+
+
+//            mNameObservable = mRequestSubject
+//                    .flatMap(new Func1<AdapterItemDetails, Observable<String>>() {
+//                        @Override
+//                        public Observable<String> call(AdapterItemDetails adapterItemDetails) {
+//                            return Observable.just("Name of song:\n" + adapterItemDetails.getName());
+//                        }
+//                    });

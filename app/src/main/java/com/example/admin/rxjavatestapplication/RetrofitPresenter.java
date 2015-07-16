@@ -4,6 +4,7 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 
+import com.appunite.rx.ResponseOrError;
 import com.example.admin.rxjavatestapplication.model.Item;
 import com.example.admin.rxjavatestapplication.model.SpotifyResponse;
 import com.example.admin.rxjavatestapplication.schedulers.ObserveOnScheduler;
@@ -22,6 +23,7 @@ import rx.observers.Observers;
 import rx.subjects.PublishSubject;
 
 public class RetrofitPresenter {
+
 
     @Nonnull
     private final PublishSubject<AdapterItem> openDetailsSubject = PublishSubject.create();

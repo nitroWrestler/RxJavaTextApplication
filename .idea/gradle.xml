@@ -10,6 +10,8 @@
           <set>
             <option value="$PROJECT_DIR$" />
             <option value="$PROJECT_DIR$/app" />
+            <option value="$PROJECT_DIR$/rx-java-extensions/rx-android-extensions" />
+            <option value="$PROJECT_DIR$/rx-java-extensions/rx-extensions" />
           </set>
         </option>
       </GradleProjectSettings>

@@ -1,1 +1,7 @@
 include ':app'
+
+include ":rx-android-extensions"
+include ":rx-extensions"
+
+project(':rx-android-extensions').projectDir = new File('rx-java-extensions/rx-android-extensions')
+project(':rx-extensions').projectDir = new File('rx-java-extensions/rx-extensions')
