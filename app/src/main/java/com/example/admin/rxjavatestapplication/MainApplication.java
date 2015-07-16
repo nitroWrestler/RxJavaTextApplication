@@ -1,11 +1,14 @@
 package com.example.admin.rxjavatestapplication;
 
 import android.app.Application;
+import android.content.Context;
 
 import com.example.admin.rxjavatestapplication.schedulers.ObserveOnScheduler;
 import com.example.admin.rxjavatestapplication.schedulers.SubscribeOnScheduler;
+import com.squareup.picasso.Picasso;
 
 import javax.annotation.Nonnull;
+import javax.inject.Named;
 import javax.inject.Singleton;
 
 import dagger.ObjectGraph;
@@ -43,6 +46,13 @@ public class MainApplication extends Application {
 
         @Provides
         @Singleton
+        @Named("Application")
+        Context provideContext() {
+            return getApplicationContext();
+        }
+
+        @Provides
+        @Singleton
         MyRetroFit provideRetroFit() {
             return new RestAdapter.Builder()
                     .setEndpoint("https://api.spotify.com")
@@ -63,6 +73,15 @@ public class MainApplication extends Application {
         @SubscribeOnScheduler
         Scheduler provideSubscribeOnScheduler() {
             return Schedulers.io();
+        }
+
+        @Provides
+        @Singleton
+        Picasso providePicasso(@Named("Application") Context context) {
+            return new Picasso.Builder(context)
+                    .indicatorsEnabled(BuildConfig.DEBUG)
+                    .loggingEnabled(BuildConfig.DEBUG)
+                    .build();
         }
     }
 }

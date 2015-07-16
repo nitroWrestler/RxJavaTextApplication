@@ -27,7 +27,6 @@ public class DetailsPresenter {
     private final MyRetroFit myRetroFit;
     private final Scheduler observeOnScheduler;
     private final Scheduler subscribeOnScheduler;
-    Observable<List<AdapterItemDetailsActivity>> mListObservable;
 
     @Inject
     public DetailsPresenter(@Nonnull MyRetroFit retroFit,
@@ -36,23 +35,6 @@ public class DetailsPresenter {
         myRetroFit = retroFit;
         this.observeOnScheduler = observeOnScheduler;
         this.subscribeOnScheduler = subscribeOnScheduler;
-
-        mListObservable = myRetroFit.listTracks()
-                .map(new Func1<SpotifyResponse, List<AdapterItemDetailsActivity>>() {
-                    @Override
-                    public List<AdapterItemDetailsActivity> call(SpotifyResponse spotifyResponse) {
-                        return Lists.transform(spotifyResponse.getTracks().getItems(),
-                                new Function<Item, AdapterItemDetailsActivity>() {
-                                    @Nullable
-                                    @Override
-                                    public AdapterItemDetailsActivity apply(@Nullable Item item) {
-                                        return new AdapterItemDetailsActivity(item.getAlbum().getId(), item.getAlbum().getName());
-                                    }
-                                });
-                    }
-                })
-                .subscribeOn(subscribeOnScheduler)
-                .observeOn(observeOnScheduler);
     }
 
     @Nonnull
@@ -63,21 +45,41 @@ public class DetailsPresenter {
 
     public class DetailsPresenterFromId {
 
-        private final String id;
-        private final Observable<String> nameObservable;
-        private final BehaviorSubject<AdapterItemDetailsActivity> mRequestSubject = BehaviorSubject.create();
-        private final Observable<String> mNameObservable;
+        private final BehaviorSubject<AdapterItemDetails> mRequestSubject = BehaviorSubject.create();
+        private final Observable<String> mNameObservable, mIdObservable, mDurationObservable,
+                mPopularityObservable, mCdCoverImage;
 
         public DetailsPresenterFromId(@Nonnull final String id) {
-            this.id = id;
 
-            mListObservable
-                    .flatMap(new Func1<List<AdapterItemDetailsActivity>, Observable<AdapterItemDetailsActivity>>() {
+            myRetroFit.listTracks()
+                    .map(new Func1<SpotifyResponse, List<AdapterItemDetails>>() {
                         @Override
-                        public Observable<AdapterItemDetailsActivity> call(List<AdapterItemDetailsActivity> adapterItemDetailsActivities) {
-                            for (AdapterItemDetailsActivity adapterItemDetailsActivity : adapterItemDetailsActivities) {
-                                if (adapterItemDetailsActivity.getId().equals(id)) {
-                                    return Observable.just(adapterItemDetailsActivity);
+                        public List<AdapterItemDetails> call(SpotifyResponse spotifyResponse) {
+                            return Lists.transform(spotifyResponse.getTracks().getItems(),
+                                    new Function<Item, AdapterItemDetails>() {
+                                        @Nullable
+                                        @Override
+                                        public AdapterItemDetails apply(@Nullable Item item) {
+                                            assert item != null;
+                                            return new AdapterItemDetails(
+                                                    item.getAlbum().getId(),
+                                                    item.getItemName(),
+                                                    item.getDuration(),
+                                                    item.getPopularity(),
+                                                    item.getAlbum().getImages()
+                                            );
+                                        }
+                                    });
+                        }
+                    })
+                    .subscribeOn(subscribeOnScheduler)
+                    .observeOn(observeOnScheduler)
+                    .flatMap(new Func1<List<AdapterItemDetails>, Observable<AdapterItemDetails>>() {
+                        @Override
+                        public Observable<AdapterItemDetails> call(List<AdapterItemDetails> adapterItemDetailsActivities) {
+                            for (AdapterItemDetails adapterItemDetails : adapterItemDetailsActivities) {
+                                if (adapterItemDetails.getId().equals(id)) {
+                                    return Observable.just(adapterItemDetails);
                                 }
                             }
                             return Observable.error(new Throwable());
@@ -86,20 +88,66 @@ public class DetailsPresenter {
                     .subscribe(mRequestSubject);
 
             mNameObservable = mRequestSubject
-                    .flatMap(new Func1<AdapterItemDetailsActivity, Observable<String>>() {
+                    .flatMap(new Func1<AdapterItemDetails, Observable<String>>() {
                         @Override
-                        public Observable<String> call(AdapterItemDetailsActivity adapterItemDetailsActivity) {
-                            return Observable.just(adapterItemDetailsActivity.getName());
+                        public Observable<String> call(AdapterItemDetails adapterItemDetails) {
+                            return Observable.just("Name of song:\n" + adapterItemDetails.getName());
                         }
                     });
-            nameObservable = Observable.just(id);
+
+            mIdObservable = mRequestSubject
+                    .flatMap(new Func1<AdapterItemDetails, Observable<String>>() {
+                        @Override
+                        public Observable<String> call(AdapterItemDetails adapterItemDetails) {
+                            return Observable.just("Id of song:\n" + adapterItemDetails.getId());
+                        }
+                    });
+
+            mDurationObservable = mRequestSubject
+                    .flatMap(new Func1<AdapterItemDetails, Observable<String>>() {
+                                 @Override
+                                 public Observable<String> call(AdapterItemDetails adapterItemDetails) {
+                                     return Observable.just("Duration of song:\n" + adapterItemDetails.getDuration_ms());
+                                 }
+                             }
+                    );
+
+            mPopularityObservable = mRequestSubject
+                    .flatMap(new Func1<AdapterItemDetails, Observable<String>>() {
+                        @Override
+                        public Observable<String> call(AdapterItemDetails adapterItemDetails) {
+                            return Observable.just("Popularity of song:\n" + adapterItemDetails.getPopularity());
+                        }
+                    });
+
+            mCdCoverImage = mRequestSubject
+                    .flatMap(new Func1<AdapterItemDetails, Observable<String>>() {
+                        @Override
+                        public Observable<String> call(AdapterItemDetails adapterItemDetails) {
+                            return Observable.just(adapterItemDetails.getUrlList().get(0).getUrl());
+                        }
+                    });
         }
 
         public Observable<String> nameObservable() {
             return mNameObservable;
         }
 
+        public Observable<String> idObservable() {
+            return mIdObservable;
+        }
 
+        public Observable<String> durationObservable() {
+            return mDurationObservable;
+        }
+
+        public Observable<String> popularityObservable() {
+            return mPopularityObservable;
+        }
+
+        public Observable<String> cdCoverImageObservable() {
+            return mCdCoverImage;
+        }
     }
 
 

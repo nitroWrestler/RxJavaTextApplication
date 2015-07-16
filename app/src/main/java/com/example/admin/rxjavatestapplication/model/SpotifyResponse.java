@@ -7,4 +7,9 @@ public class SpotifyResponse {
     public Tracks getTracks() {
         return tracks;
     }
+
+    public SpotifyResponse(Tracks tracks) {
+        this.tracks = tracks;
+    }
+
 }

@@ -1,7 +1,5 @@
 package com.example.admin.rxjavatestapplication;
 
-import android.util.Log;
-
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.inject.Inject;
@@ -18,7 +16,6 @@ import java.util.List;
 import rx.Observable;
 import rx.Observer;
 import rx.Scheduler;
-import rx.Subscriber;
 import rx.functions.Action1;
 import rx.functions.Func1;
 import rx.observers.Observers;
@@ -60,7 +57,9 @@ public class RetrofitPresenter {
                                     @Nullable
                                     @Override
                                     public AdapterItem apply(@Nullable Item item) {
-                                        return new AdapterItem(item.getAlbum().getId(), item.getAlbum().getName());
+                                        return new AdapterItem(
+                                                item.getAlbum().getId(),
+                                                item.getItemName());
                                     }
                                 });
                     }
@@ -91,7 +90,6 @@ public class RetrofitPresenter {
     public Observable<AdapterItem> openDetailsObservable() {
         return openDetailsSubject;
     }
-
 
     public class AdapterItem {
 
@@ -136,31 +134,3 @@ public class RetrofitPresenter {
         void showButtonView(boolean showButtonView);
     }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

@@ -8,7 +8,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
-import com.example.admin.rxjavatestapplication.model.Item;
 import com.google.common.collect.ImmutableList;
 
 import java.util.List;
@@ -67,7 +66,6 @@ public class MyListViewAdapter extends RecyclerView.Adapter<MyListViewAdapter.My
 
         public void bind(@Nonnull RetrofitPresenter.AdapterItem item) {
             mTextView.setText(item.getName());
-
             subscription = new CompositeSubscription(
                 ViewObservable.clicks(mTextView).subscribe(item.clickObserver())
             );

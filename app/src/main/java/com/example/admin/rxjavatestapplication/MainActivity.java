@@ -89,6 +89,10 @@ public class MainActivity extends Activity {
         };
     }
 
+    public static MainApplication get(Activity activity) {
+        return (MainApplication) activity.getApplicationContext();
+    }
+
     @dagger.Module(
             injects = {
                     RetrofitPresenter.class
