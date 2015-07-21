@@ -10,15 +10,26 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 
-import java.util.List;
+import com.appunite.rx.android.MoreViewObservables;
+import com.example.admin.rxjavatestapplication.helpers.LoadMoreHelper;
+import com.google.common.collect.ImmutableList;
 
 import javax.annotation.Nonnull;
 
+import butterknife.ButterKnife;
+import butterknife.InjectView;
 import rx.functions.Action1;
 
-public class MainActivity extends Activity {
+public class MainActivity extends BaseActivity {
 
-    private MyListViewAdapter myListViewAdapter;
+    @InjectView(R.id.listView)
+    RecyclerView recyclerView;
+    @InjectView(R.id.progressBarMainActivity)
+    View progressView;
+    @InjectView(R.id.viewRefreshData)
+    View buttonView;
+    @InjectView(R.id.bRefreshData)
+    Button bRefreshData;
 
     private RetrofitPresenter presenter;
 
@@ -27,15 +38,12 @@ public class MainActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        final RecyclerView listView = (RecyclerView) findViewById(R.id.listView);
-        listView.setLayoutManager(new LinearLayoutManager(this));
+        ButterKnife.inject(this);
 
-        final View progressView = findViewById(R.id.progressBarMainActivity);
-        final View buttonView = findViewById(R.id.viewRefreshData);
-        final Button bRefreshData = (Button) findViewById(R.id.bRefreshData);
-
-        myListViewAdapter = new MyListViewAdapter(this);
-        listView.setAdapter(myListViewAdapter);
+        final LinearLayoutManager layoutManager = new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false);
+        final MyListViewAdapter myListViewAdapter = new MyListViewAdapter();
+        recyclerView.setLayoutManager(layoutManager);
+        recyclerView.setAdapter(myListViewAdapter);
 
         presenter = MainApplication
                 .fromApplication(getApplication())
@@ -43,35 +51,25 @@ public class MainActivity extends Activity {
                 .plus(new Module())
                 .get(RetrofitPresenter.class);
 
-        presenter.register(new RetrofitPresenter.Listener() {
-            @Override
-            public void showProgress(boolean showProgress) {
-                if (showProgress) progressView.setVisibility(View.VISIBLE);
-                else progressView.setVisibility(View.GONE);
-            }
+        presenter.listObservable()
+                .compose(lifecycleMainObservable.<ImmutableList<RetrofitPresenter.AdapterItem>>bindLifecycle())
+                .subscribe(myListViewAdapter);
 
-            @Override
-            public void updateData(List<RetrofitPresenter.AdapterItem> spotifyResponse) {
-                List<RetrofitPresenter.AdapterItem> items = spotifyResponse;
-                myListViewAdapter.setData(items);
-                Log.w("ITEMS", items.toString());
-            }
+        presenter.openDetailsObservable()
+                .compose(lifecycleMainObservable.<RetrofitPresenter.AdapterItem>bindLifecycle())
+                .subscribe(startDetailsActivityAction(this));
+//
+//        MoreViewObservables.scroll(recyclerView)
+//                .filter(LoadMoreHelper.mapToNeedLoadMore(layoutManager, myListViewAdapter))
+//                .compose(lifecycleMainObservable.bindLifecycle())
+//                .subscribe(presenter.loadMoreObserver());
 
-            @Override
-            public void showButtonView(boolean showButtonView) {
-                if (showButtonView) buttonView.setVisibility(View.VISIBLE);
-                else buttonView.setVisibility(View.GONE);
-            }
-        });
-
-        presenter.openDetailsObservable().subscribe(startDetailsActivityAction(this));
-
-        bRefreshData.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                presenter.refreshClick();
-            }
-        });
+//        bRefreshData.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View v) {
+//                presenter.refreshClick();
+//            }
+//        });
     }
 
     @Nonnull
@@ -89,9 +87,7 @@ public class MainActivity extends Activity {
         };
     }
 
-    public static MainApplication get(Activity activity) {
-        return (MainApplication) activity.getApplicationContext();
-    }
+
 
     @dagger.Module(
             injects = {

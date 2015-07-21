@@ -12,6 +12,8 @@ public class Item {
 
     private String popularity;
 
+    private String id;
+
     private Album album;
 
     @NonNull
@@ -31,14 +33,12 @@ public class Item {
         return popularity;
     }
 
+    public String getId() { return id; }
+
     public Item(String name, Album album) {
         this.name = name;
         this.album = album;
     }
-
-//    public Item(Album album) {
-//        this.album = album;
-//    }
 
     public Item(String name, String duration_ms, String popularity, Album album) {
         this.name = name;

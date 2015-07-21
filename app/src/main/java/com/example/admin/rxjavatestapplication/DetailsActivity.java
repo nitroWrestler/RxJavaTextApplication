@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
+import android.support.v4.app.ActivityCompat;
 import android.util.Log;
 import android.view.View;
 import android.widget.ImageView;
@@ -22,7 +23,7 @@ import rx.functions.Func1;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-public class DetailsActivity extends Activity{
+public class DetailsActivity extends BaseActivity{
 
     private DetailsPresenter detailsPresenter;
 
@@ -42,8 +43,6 @@ public class DetailsActivity extends Activity{
     TextView popularityOfSong;
     @InjectView(R.id.ivCdCover)
     ImageView cdCoverImage;
-    @InjectView(R.id.tvCdCover)
-    TextView tvCdCover;
 
     @Inject
     Picasso picasso;
@@ -73,18 +72,23 @@ public class DetailsActivity extends Activity{
                 detailsPresenter.getPresenter(id);
 
         presenterFromId.nameObservable()
+                .compose(lifecycleMainObservable.<String>bindLifecycle())
                 .subscribe(ViewActions.setText(nameOfSong));
 
         presenterFromId.idObservable()
+                .compose(lifecycleMainObservable.<String>bindLifecycle())
                 .subscribe(ViewActions.setText(idOfSong));
 
         presenterFromId.durationObservable()
+                .compose(lifecycleMainObservable.<String>bindLifecycle())
                 .subscribe(ViewActions.setText(durationOfSong));
 
         presenterFromId.popularityObservable()
+                .compose(lifecycleMainObservable.<String>bindLifecycle())
                 .subscribe(ViewActions.setText(popularityOfSong));
 
         presenterFromId.cdCoverImageObservable()
+                .compose(lifecycleMainObservable.<String>bindLifecycle())
                 .subscribe(new Action1<String>() {
                     @Override
                     public void call(String s) {
@@ -94,7 +98,6 @@ public class DetailsActivity extends Activity{
                                 .into(cdCoverImage);
                     }
                 });
-
     }
 
     @dagger.Module(

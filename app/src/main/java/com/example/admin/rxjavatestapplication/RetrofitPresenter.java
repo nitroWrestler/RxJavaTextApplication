@@ -4,19 +4,19 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 
+import com.appunite.rx.ObservableExtensions;
 import com.appunite.rx.ResponseOrError;
+import com.example.admin.rxjavatestapplication.dao.SpotifyResponseDao;
+import com.example.admin.rxjavatestapplication.detector.SimpleDetector;
 import com.example.admin.rxjavatestapplication.model.Item;
 import com.example.admin.rxjavatestapplication.model.SpotifyResponse;
-import com.example.admin.rxjavatestapplication.schedulers.ObserveOnScheduler;
-import com.example.admin.rxjavatestapplication.schedulers.SubscribeOnScheduler;
 import com.google.common.base.Function;
+import com.google.common.base.Objects;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
-
-import java.util.List;
 
 import rx.Observable;
 import rx.Observer;
-import rx.Scheduler;
 import rx.functions.Action1;
 import rx.functions.Func1;
 import rx.observers.Observers;
@@ -27,73 +27,51 @@ public class RetrofitPresenter {
 
     @Nonnull
     private final PublishSubject<AdapterItem> openDetailsSubject = PublishSubject.create();
-
-    private Listener listener;
-    private final MyRetroFit myRetroFit;
-    private final Scheduler observeOnScheduler;
-    private final Scheduler subscribeOnScheduler;
+    @Nonnull
+    private final Observable<ImmutableList<AdapterItem>> immutableListObservable;
+    @Nonnull
+    private final SpotifyResponseDao spotifyResponseDao;
 
     @Inject
-    public RetrofitPresenter(@Nonnull MyRetroFit retroFit,
-                             @ObserveOnScheduler Scheduler observeOnScheduler,
-                             @SubscribeOnScheduler Scheduler subscribeOnScheduler) {
-        myRetroFit = retroFit;
-        this.observeOnScheduler = observeOnScheduler;
-        this.subscribeOnScheduler = subscribeOnScheduler;
-    }
+    public RetrofitPresenter(@Nonnull final SpotifyResponseDao spotifyResponseDao) {
+        this.spotifyResponseDao = spotifyResponseDao;
 
-    public void register(@Nonnull final Listener listener) {
-        this.listener = listener;
-
-        listTracksPresenter();
-    }
-
-    public void listTracksPresenter() {
-        listener.showProgress(true);
-        myRetroFit.listTracks()
-                .map(new Func1<SpotifyResponse, List<AdapterItem>>() {
+        immutableListObservable = itemsDaoObservable()
+                .compose(ResponseOrError.<SpotifyResponse>onlySuccess())
+                .flatMap(new Func1<SpotifyResponse, Observable<ImmutableList<AdapterItem>>>() {
                     @Override
-                    public List<AdapterItem> call(SpotifyResponse spotifyResponse) {
-                        return Lists.transform(spotifyResponse.getTracks().getItems(),
+                    public Observable<ImmutableList<AdapterItem>> call(SpotifyResponse spotifyResponse) {
+                        return Observable.just(ImmutableList.copyOf(Lists.transform(spotifyResponse.getTracks().getItems(),
                                 new Function<Item, AdapterItem>() {
                                     @Nullable
                                     @Override
                                     public AdapterItem apply(@Nullable Item item) {
                                         return new AdapterItem(
-                                                item.getAlbum().getId(),
-                                                item.getItemName());
+                                                item.getId(),
+                                                item.getItemName()
+                                        );
                                     }
-                                });
+                                })));
                     }
                 })
-                .subscribeOn(subscribeOnScheduler)
-                .observeOn(observeOnScheduler)
-                .subscribe(new Action1<List<AdapterItem>>() {
-                    @Override
-                    public void call(List<AdapterItem> spotifyResponse) {
-                        listener.updateData(spotifyResponse);
-                        listener.showProgress(false);
-                    }
-                }, new Action1<Throwable>() {
-                    @Override
-                    public void call(Throwable throwable) {
-                        listener.showButtonView(true);
-                        listener.showProgress(false);
-                    }
-                });
-    }
-
-    public void refreshClick() {
-        listener.showButtonView(false);
-        listTracksPresenter();
+                .compose(ObservableExtensions.<ImmutableList<AdapterItem>>behaviorRefCount());
     }
 
     @Nonnull
+    public Observable<ImmutableList<AdapterItem>> listObservable() {
+        return immutableListObservable;
+    }
+
+    @Nonnull
+    public Observable<ResponseOrError<SpotifyResponse>> itemsDaoObservable() {
+        return this.spotifyResponseDao.spotifyItemsObservable();
+    }
+
     public Observable<AdapterItem> openDetailsObservable() {
         return openDetailsSubject;
     }
 
-    public class AdapterItem {
+    public class AdapterItem implements SimpleDetector.Detectable<AdapterItem> {
 
         @Nonnull
         private final String id;
@@ -125,14 +103,15 @@ public class RetrofitPresenter {
                 }
             });
         }
-    }
 
-    public interface Listener {
+        @Override
+        public boolean matches(@Nonnull AdapterItem item) {
+            return Objects.equal(id, item.id);
+        }
 
-        void showProgress(boolean showProgress);
-
-        void updateData(List<AdapterItem> spotifyResponse);
-
-        void showButtonView(boolean showButtonView);
+        @Override
+        public boolean same(@Nonnull AdapterItem item) {
+            return equals(item);
+        }
     }
 }

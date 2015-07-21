@@ -8,43 +8,66 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
+import com.example.admin.rxjavatestapplication.detector.ChangesDetector;
+import com.example.admin.rxjavatestapplication.detector.SimpleDetector;
 import com.google.common.collect.ImmutableList;
 
 import java.util.List;
 
 import javax.annotation.Nonnull;
+import javax.inject.Inject;
 
 import butterknife.ButterKnife;
 import butterknife.InjectView;
 import rx.android.view.ViewObservable;
+import rx.functions.Action1;
 import rx.subscriptions.CompositeSubscription;
 
-public class MyListViewAdapter extends RecyclerView.Adapter<MyListViewAdapter.MyViewHolder> {
+abstract class BaseViewHolder extends RecyclerView.ViewHolder {
 
-    private List<RetrofitPresenter.AdapterItem> mItems = ImmutableList.of();
+    public BaseViewHolder(View itemView) {
+        super(itemView);
+    }
+
+    public abstract void bind (@Nonnull RetrofitPresenter.AdapterItem item);
+
+    public abstract void recycle();
+}
+
+public class MyListViewAdapter extends RecyclerView.Adapter<BaseViewHolder> implements
+        Action1<ImmutableList<RetrofitPresenter.AdapterItem>>, ChangesDetector.ChangesAdapter {
 
     @Nonnull
-    private final Context mContext;
+    private final ChangesDetector<RetrofitPresenter.AdapterItem, RetrofitPresenter.AdapterItem> changesDetector;
+    @Nonnull
+    private ImmutableList<RetrofitPresenter.AdapterItem> mItems = ImmutableList.of();
 
-    public MyListViewAdapter(@Nonnull Context mContext) {
-        this.mContext = mContext;
+    @Inject
+    public MyListViewAdapter() {
+        this.changesDetector = new ChangesDetector<>(new SimpleDetector<RetrofitPresenter.AdapterItem>());
     }
 
-    public void setData(List<RetrofitPresenter.AdapterItem> items) {
-        mItems = items;
-        notifyDataSetChanged();
-    }
+//    public void setData(ImmutableList<RetrofitPresenter.AdapterItem> items) {
+//        mItems = items;
+//        notifyDataSetChanged();
+//    }
 
     @Override
-    public MyListViewAdapter.MyViewHolder onCreateViewHolder(ViewGroup viewGroup, int i) {
-        final View view = LayoutInflater.from(mContext)
+    public BaseViewHolder onCreateViewHolder(ViewGroup viewGroup, int i) {
+        final View view = LayoutInflater.from(viewGroup.getContext())
                 .inflate(android.R.layout.simple_list_item_1, viewGroup, false);
         return new MyViewHolder(view);
     }
 
     @Override
-    public void onBindViewHolder(MyListViewAdapter.MyViewHolder viewHolder, int position) {
-        viewHolder.bind(mItems.get(position));
+    public void onBindViewHolder(BaseViewHolder holder, int position) {
+        holder.bind(mItems.get(position));
+    }
+
+    @Override
+    public void onViewRecycled(BaseViewHolder holder) {
+        super.onViewRecycled(holder);
+        holder.recycle();
     }
 
     @Override
@@ -52,14 +75,20 @@ public class MyListViewAdapter extends RecyclerView.Adapter<MyListViewAdapter.My
         return mItems.size();
     }
 
-    public class MyViewHolder extends RecyclerView.ViewHolder {
+    @Override
+    public void call(ImmutableList<RetrofitPresenter.AdapterItem> adapterItems) {
+        this.mItems = adapterItems;
+        changesDetector.newData(this, adapterItems, false);
+    }
 
-        private CompositeSubscription subscription;
+    public class MyViewHolder extends BaseViewHolder {
 
         @InjectView(android.R.id.text1)
         TextView mTextView;
 
-        public MyViewHolder(View itemView) {
+        private CompositeSubscription subscription;
+
+        public MyViewHolder(@Nonnull View itemView) {
             super(itemView);
             ButterKnife.inject(this, itemView);
         }
@@ -69,6 +98,11 @@ public class MyListViewAdapter extends RecyclerView.Adapter<MyListViewAdapter.My
             subscription = new CompositeSubscription(
                 ViewObservable.clicks(mTextView).subscribe(item.clickObserver())
             );
+        }
+
+        @Override
+        public void recycle() {
+            subscription.unsubscribe();
         }
     }
 }

@@ -3,11 +3,13 @@ package com.example.admin.rxjavatestapplication;
 
 import com.appunite.rx.ObservableExtensions;
 import com.appunite.rx.ResponseOrError;
+import com.example.admin.rxjavatestapplication.dao.SpotifyResponseDao;
 import com.example.admin.rxjavatestapplication.model.Item;
 import com.example.admin.rxjavatestapplication.model.SpotifyResponse;
 import com.example.admin.rxjavatestapplication.schedulers.ObserveOnScheduler;
 import com.example.admin.rxjavatestapplication.schedulers.SubscribeOnScheduler;
 import com.google.common.base.Function;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 
 import java.util.List;
@@ -27,18 +29,16 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 public class DetailsPresenter {
 
-
+    @Nonnull
     private final MyRetroFit myRetroFit;
-    private final Scheduler observeOnScheduler;
-    private final Scheduler subscribeOnScheduler;
+    @Nonnull
+    private final SpotifyResponseDao spotifyResponseDao;
 
     @Inject
     public DetailsPresenter(@Nonnull MyRetroFit retroFit,
-                            @ObserveOnScheduler Scheduler observeOnScheduler,
-                            @SubscribeOnScheduler Scheduler subscribeOnScheduler) {
+                            @Nonnull final SpotifyResponseDao spotifyResponseDao) {
         myRetroFit = retroFit;
-        this.observeOnScheduler = observeOnScheduler;
-        this.subscribeOnScheduler = subscribeOnScheduler;
+        this.spotifyResponseDao = spotifyResponseDao;
     }
 
     @Nonnull
@@ -47,40 +47,46 @@ public class DetailsPresenter {
         return new DetailsPresenterFromId(id);
     }
 
+    @Nonnull
+    public Observable<ResponseOrError<SpotifyResponse>> itemsDaoObservable() {
+        return this.spotifyResponseDao.spotifyItemsObservable();
+    }
+
     public class DetailsPresenterFromId {
 
+        @Nonnull
         private final BehaviorSubject<AdapterItemDetails> mRequestSubject = BehaviorSubject.create();
+        @Nonnull
         private final Observable<ResponseOrError<String>> mNameObservable, mIdObservable, mDurationObservable,
                 mPopularityObservable, mCdCoverImage;
 
         public DetailsPresenterFromId(@Nonnull final String id) {
 
-            myRetroFit.listTracks()
-                    .map(new Func1<SpotifyResponse, List<AdapterItemDetails>>() {
+            itemsDaoObservable()
+                    .compose(ResponseOrError.<SpotifyResponse>onlySuccess())
+                    .map(new Func1<SpotifyResponse, ImmutableList<AdapterItemDetails>>() {
                         @Override
-                        public List<AdapterItemDetails> call(SpotifyResponse spotifyResponse) {
-                            return Lists.transform(spotifyResponse.getTracks().getItems(),
+                        public ImmutableList<AdapterItemDetails> call(SpotifyResponse spotifyResponse) {
+                            return ImmutableList.copyOf(Lists.transform(spotifyResponse.getTracks().getItems(),
                                     new Function<Item, AdapterItemDetails>() {
                                         @Nullable
                                         @Override
                                         public AdapterItemDetails apply(@Nullable Item item) {
                                             assert item != null;
                                             return new AdapterItemDetails(
-                                                    item.getAlbum().getId(),
+                                                    item.getId(),
                                                     item.getItemName(),
                                                     item.getDuration(),
                                                     item.getPopularity(),
                                                     item.getAlbum().getImages()
                                             );
                                         }
-                                    });
+                                    }));
                         }
                     })
-                    .subscribeOn(subscribeOnScheduler)
-                    .observeOn(observeOnScheduler)
-                    .flatMap(new Func1<List<AdapterItemDetails>, Observable<AdapterItemDetails>>() {
+                    .flatMap(new Func1<ImmutableList<AdapterItemDetails>, Observable<AdapterItemDetails>>() {
                         @Override
-                        public Observable<AdapterItemDetails> call(List<AdapterItemDetails> adapterItemDetailsActivities) {
+                        public Observable<AdapterItemDetails> call(ImmutableList<AdapterItemDetails> adapterItemDetailsActivities) {
                             for (AdapterItemDetails adapterItemDetails : adapterItemDetailsActivities) {
                                 if (adapterItemDetails.getId().equals(id)) {
                                     return Observable.just(adapterItemDetails);
@@ -162,17 +168,4 @@ public class DetailsPresenter {
                     .compose(ResponseOrError.<String>onlySuccess());
         }
     }
-
-
 }
-
-
-
-
-//            mNameObservable = mRequestSubject
-//                    .flatMap(new Func1<AdapterItemDetails, Observable<String>>() {
-//                        @Override
-//                        public Observable<String> call(AdapterItemDetails adapterItemDetails) {
-//                            return Observable.just("Name of song:\n" + adapterItemDetails.getName());
-//                        }
-//                    });

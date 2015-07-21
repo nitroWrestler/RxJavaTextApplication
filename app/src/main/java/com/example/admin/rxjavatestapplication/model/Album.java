@@ -4,18 +4,12 @@ import java.util.List;
 
 public class Album {
 
-    private String id;
-
     private String name;
 
     private List<Images> images;
 
     public String getName() {
         return name;
-    }
-
-    public String getId() {
-        return id;
     }
 
     public List<Images> getImages() {
