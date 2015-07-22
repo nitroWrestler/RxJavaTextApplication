@@ -11,6 +11,8 @@ import rx.Observable;
 
 public interface MyRetroFit {
 
-    @GET("/v1/search?q=deorro&type=track&limit=15")
+//    https://api.spotify.com/v1/search?q=deorro&type=track&limit=15&offset=0
+
+    @GET("/v1/search?q=deorro&type=track&limit=50")
     Observable<SpotifyResponse> listTracks(@Query("offset") int offset);
 }

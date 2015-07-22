@@ -1,38 +1,80 @@
 package com.example.admin.rxjavatestapplication.dao;
 
 import com.appunite.rx.ResponseOrError;
+import com.appunite.rx.android.MyAndroidSchedulers;
+import com.appunite.rx.operators.MoreOperators;
+import com.appunite.rx.operators.OperatorMergeNextToken;
 import com.example.admin.rxjavatestapplication.MyRetroFit;
+import com.example.admin.rxjavatestapplication.RetrofitPresenter;
+import com.example.admin.rxjavatestapplication.model.Item;
 import com.example.admin.rxjavatestapplication.model.SpotifyResponse;
+import com.example.admin.rxjavatestapplication.model.Tracks;
 import com.example.admin.rxjavatestapplication.schedulers.ObserveOnScheduler;
 import com.example.admin.rxjavatestapplication.schedulers.SubscribeOnScheduler;
+import com.google.common.collect.ImmutableList;
+
+import java.util.HashMap;
+import java.util.List;
 
 import javax.annotation.Nonnull;
+import javax.annotation.concurrent.Immutable;
 import javax.inject.Inject;
-import javax.inject.Singleton;
 
 import rx.Observable;
+import rx.Observer;
 import rx.Scheduler;
+import rx.functions.Func1;
+import rx.functions.Func2;
+import rx.subjects.PublishSubject;
 
-//@Singleton
 public class SpotifyResponseDao {
 
     @Nonnull
-    Observable<ResponseOrError<SpotifyResponse>> spotifyResponseObservable;
-
+    private final Observable<ResponseOrError<SpotifyResponse>> spotifyResponseObservable;
+    @Nonnull
+    private final PublishSubject<Object> loadMoreSubject = PublishSubject.create();
+    @Nonnull
     private final MyRetroFit myRetroFit;
+    @Nonnull
     private final Scheduler observeOnScheduler;
+    @Nonnull
     private final Scheduler subscribeOnScheduler;
+
+    int offset = 0;
 
     @Inject
     public SpotifyResponseDao(@Nonnull MyRetroFit retroFit,
-                              @ObserveOnScheduler Scheduler observeOnScheduler,
-                              @SubscribeOnScheduler Scheduler subscribeOnScheduler) {
+                              @ObserveOnScheduler final Scheduler observeOnScheduler,
+                              @SubscribeOnScheduler final Scheduler subscribeOnScheduler) {
         myRetroFit = retroFit;
         this.observeOnScheduler = observeOnScheduler;
         this.subscribeOnScheduler = subscribeOnScheduler;
 
-        spotifyResponseObservable = myRetroFit.listTracks(0)
+        final OperatorMergeNextToken<SpotifyResponse, Object> mergeSpotifyResponseNextToken = OperatorMergeNextToken
+                .create(new Func1<SpotifyResponse, Observable<SpotifyResponse>>() {
+                            @Override
+                            public Observable<SpotifyResponse> call(SpotifyResponse spotifyResponse) {
+                                if (spotifyResponse == null) {
+                                    return myRetroFit.listTracks(offset)
+                                            .subscribeOn(subscribeOnScheduler)
+                                            .observeOn(observeOnScheduler);
+                                } else {
+                                    offset += 50;
+                                    final Observable<SpotifyResponse> apiRequest = myRetroFit
+                                            .listTracks(offset)
+                                            .subscribeOn(subscribeOnScheduler)
+                                            .observeOn(observeOnScheduler);
+                                    return Observable.just(spotifyResponse).zipWith(apiRequest,
+                                            new MergeTwoResponses());
+                                }
+                            }
+                        }
+                );
+
+        spotifyResponseObservable = loadMoreSubject.startWith((Object) null)
+                .lift(mergeSpotifyResponseNextToken)
                 .compose(ResponseOrError.<SpotifyResponse>toResponseOrErrorObservable())
+                .compose(MoreOperators.<SpotifyResponse>repeatOnError(MyAndroidSchedulers.NETWORK_SCHEDULER))
                 .subscribeOn(subscribeOnScheduler)
                 .observeOn(observeOnScheduler);
     }
@@ -41,24 +83,25 @@ public class SpotifyResponseDao {
     public Observable<ResponseOrError<SpotifyResponse>> spotifyItemsObservable() {
         return spotifyResponseObservable;
     }
+
+    @Nonnull
+    public Observable<ResponseOrError<SpotifyResponse>> TESTspotifyItemsObservable(String offset) {
+        this.offset = Integer.parseInt(offset);
+        return spotifyResponseObservable;
+    }
+
+    public Observer<Object> loadMoreObserver() {
+        return loadMoreSubject;
+    }
+
+    private static class MergeTwoResponses implements Func2<SpotifyResponse, SpotifyResponse, SpotifyResponse> {
+        @Override
+        public SpotifyResponse call(SpotifyResponse previous, SpotifyResponse moreData) {
+            final List<Item> items = ImmutableList.<Item>builder()
+                    .addAll(previous.getTracks().getItems())
+                    .addAll(moreData.getTracks().getItems())
+                    .build();
+            return new SpotifyResponse(new Tracks(items, moreData.getTracks().getOffset()));
+        }
+    }
 }
-
-
-//                .map(new Func1<SpotifyResponse, ImmutableList<RetrofitPresenter.AdapterItem>>() {
-//                    @Override
-//                    public ImmutableList<RetrofitPresenter.AdapterItem> call(SpotifyResponse spotifyResponse) {
-//                        return ImmutableList.copyOf(Lists.transform(spotifyResponse.getTracks().getItems(),
-//                                new Function<Item, RetrofitPresenter.AdapterItem>() {
-//                                    @Nullable
-//                                    @Override
-//                                    public RetrofitPresenter.AdapterItem apply(@Nullable Item item) {
-//                                        return new RetrofitPresenter.AdapterItem(
-//                                                item.getAlbum().getId(),
-//                                                item.getItemName());
-//                                    }
-//                                }));
-//                    }
-//                })
-//                .compose(ResponseOrError.<ImmutableList<RetrofitPresenter.AdapterItem>>toResponseOrErrorObservable())
-//                .subscribeOn(subscribeOnScheduler)
-//                .observeOn(observeOnScheduler);

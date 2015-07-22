@@ -11,13 +11,16 @@ import android.view.View;
 import android.widget.Button;
 
 import com.appunite.rx.android.MoreViewObservables;
+import com.example.admin.rxjavatestapplication.dao.SpotifyResponseDao;
 import com.example.admin.rxjavatestapplication.helpers.LoadMoreHelper;
 import com.google.common.collect.ImmutableList;
 
 import javax.annotation.Nonnull;
+import javax.inject.Inject;
 
 import butterknife.ButterKnife;
 import butterknife.InjectView;
+import dagger.Provides;
 import rx.functions.Action1;
 
 public class MainActivity extends BaseActivity {
@@ -58,11 +61,11 @@ public class MainActivity extends BaseActivity {
         presenter.openDetailsObservable()
                 .compose(lifecycleMainObservable.<RetrofitPresenter.AdapterItem>bindLifecycle())
                 .subscribe(startDetailsActivityAction(this));
-//
-//        MoreViewObservables.scroll(recyclerView)
-//                .filter(LoadMoreHelper.mapToNeedLoadMore(layoutManager, myListViewAdapter))
-//                .compose(lifecycleMainObservable.bindLifecycle())
-//                .subscribe(presenter.loadMoreObserver());
+
+        MoreViewObservables.scroll(recyclerView)
+                .filter(LoadMoreHelper.mapToNeedLoadMore(layoutManager, myListViewAdapter))
+                .compose(lifecycleMainObservable.bindLifecycle())
+                .subscribe(presenter.loadMoreObserver());
 
 //        bRefreshData.setOnClickListener(new View.OnClickListener() {
 //            @Override
@@ -81,8 +84,9 @@ public class MainActivity extends BaseActivity {
                 final Bundle bundle = ActivityOptionsCompat.makeSceneTransitionAnimation(activity)
                         .toBundle();
                 ActivityCompat.startActivity(activity,
-                        DetailsActivity.getIntent(activity, adapterItem.getId()),
+                        DetailsActivity.getIntent(activity, adapterItem.getId(), adapterItem.getOffset()),
                         bundle);
+                Log.w("ADAPTERITEM", adapterItem.getId());
             }
         };
     }

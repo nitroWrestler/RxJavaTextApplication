@@ -28,9 +28,12 @@ public class DetailsActivity extends BaseActivity{
     private DetailsPresenter detailsPresenter;
 
     private static final String EXTRA_ID = "EXTRA_ID";
+    private static final String EXTRA_OFFSET = "EXTRA_OFFSET";
 
-    public static Intent getIntent(@Nonnull Context context, @Nonnull String id) {
-        return new Intent(context, DetailsActivity.class).putExtra(EXTRA_ID, checkNotNull(id));
+    public static Intent getIntent(@Nonnull Context context, @Nonnull String id, @Nonnull String offset) {
+        return new Intent(context, DetailsActivity.class)
+                .putExtra(EXTRA_ID, checkNotNull(id))
+                .putExtra(EXTRA_OFFSET, checkNotNull(offset));
     }
 
     @InjectView(R.id.tvNameOfSong)
@@ -53,6 +56,7 @@ public class DetailsActivity extends BaseActivity{
         setContentView(R.layout.activity_details);
 
         final String id = checkNotNull(getIntent().getStringExtra(EXTRA_ID));
+        final String offset = checkNotNull(getIntent().getStringExtra(EXTRA_OFFSET));
 
         ButterKnife.inject(this);
 
@@ -69,7 +73,7 @@ public class DetailsActivity extends BaseActivity{
                 .inject(this);
 
         final DetailsPresenter.DetailsPresenterFromId presenterFromId =
-                detailsPresenter.getPresenter(id);
+                detailsPresenter.getPresenter(id, offset);
 
         presenterFromId.nameObservable()
                 .compose(lifecycleMainObservable.<String>bindLifecycle())

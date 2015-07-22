@@ -56,7 +56,7 @@ public class MainApplication extends Application {
         MyRetroFit provideRetroFit() {
             return new RestAdapter.Builder()
                     .setEndpoint("https://api.spotify.com")
-                    .setLogLevel(RestAdapter.LogLevel.FULL)
+                    .setLogLevel(RestAdapter.LogLevel.BASIC)
                     .build()
                     .create(MyRetroFit.class);
         }

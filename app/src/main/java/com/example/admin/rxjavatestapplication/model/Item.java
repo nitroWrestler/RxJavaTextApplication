@@ -14,6 +14,8 @@ public class Item {
 
     private String id;
 
+    private String fakeOffset;
+
     private Album album;
 
     @NonNull
@@ -33,7 +35,9 @@ public class Item {
         return popularity;
     }
 
-    public String getId() { return id; }
+    public String getId() {
+        return id;
+    }
 
     public Item(String name, Album album) {
         this.name = name;
@@ -45,5 +49,13 @@ public class Item {
         this.duration_ms = duration_ms;
         this.popularity = popularity;
         this.album = album;
+    }
+
+    public void setFakeOffset(String fakeOffset) {
+        this.fakeOffset = fakeOffset;
+    }
+
+    public String getFakeOffset() {
+        return fakeOffset;
     }
 }

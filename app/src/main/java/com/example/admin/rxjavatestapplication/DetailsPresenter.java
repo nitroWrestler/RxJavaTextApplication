@@ -42,14 +42,15 @@ public class DetailsPresenter {
     }
 
     @Nonnull
-    public DetailsPresenterFromId getPresenter(@Nonnull final String id) {
+    public DetailsPresenterFromId getPresenter(@Nonnull final String id,
+                                               @Nonnull final String offset) {
         checkNotNull(id);
-        return new DetailsPresenterFromId(id);
+        return new DetailsPresenterFromId(id, offset);
     }
 
     @Nonnull
-    public Observable<ResponseOrError<SpotifyResponse>> itemsDaoObservable() {
-        return this.spotifyResponseDao.spotifyItemsObservable();
+    public Observable<ResponseOrError<SpotifyResponse>> itemsDaoObservable(String offset) {
+        return this.spotifyResponseDao.TESTspotifyItemsObservable(offset);
     }
 
     public class DetailsPresenterFromId {
@@ -60,9 +61,10 @@ public class DetailsPresenter {
         private final Observable<ResponseOrError<String>> mNameObservable, mIdObservable, mDurationObservable,
                 mPopularityObservable, mCdCoverImage;
 
-        public DetailsPresenterFromId(@Nonnull final String id) {
+        public DetailsPresenterFromId(@Nonnull final String id,
+                                      @Nonnull final String offset) {
 
-            itemsDaoObservable()
+            itemsDaoObservable(offset)
                     .compose(ResponseOrError.<SpotifyResponse>onlySuccess())
                     .map(new Func1<SpotifyResponse, ImmutableList<AdapterItemDetails>>() {
                         @Override

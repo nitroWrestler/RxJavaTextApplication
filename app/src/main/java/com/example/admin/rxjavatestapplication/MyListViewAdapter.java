@@ -47,11 +47,6 @@ public class MyListViewAdapter extends RecyclerView.Adapter<BaseViewHolder> impl
         this.changesDetector = new ChangesDetector<>(new SimpleDetector<RetrofitPresenter.AdapterItem>());
     }
 
-//    public void setData(ImmutableList<RetrofitPresenter.AdapterItem> items) {
-//        mItems = items;
-//        notifyDataSetChanged();
-//    }
-
     @Override
     public BaseViewHolder onCreateViewHolder(ViewGroup viewGroup, int i) {
         final View view = LayoutInflater.from(viewGroup.getContext())
@@ -94,7 +89,8 @@ public class MyListViewAdapter extends RecyclerView.Adapter<BaseViewHolder> impl
         }
 
         public void bind(@Nonnull RetrofitPresenter.AdapterItem item) {
-            mTextView.setText(item.getName());
+            String b = item.getName() + ", Offset: " + item.getOffset();
+            mTextView.setText(b);
             subscription = new CompositeSubscription(
                 ViewObservable.clicks(mTextView).subscribe(item.clickObserver())
             );

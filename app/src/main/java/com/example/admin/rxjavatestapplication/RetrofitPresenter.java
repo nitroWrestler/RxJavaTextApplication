@@ -1,5 +1,7 @@
 package com.example.admin.rxjavatestapplication;
 
+import android.util.Log;
+
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.inject.Inject;
@@ -40,15 +42,20 @@ public class RetrofitPresenter {
                 .compose(ResponseOrError.<SpotifyResponse>onlySuccess())
                 .flatMap(new Func1<SpotifyResponse, Observable<ImmutableList<AdapterItem>>>() {
                     @Override
-                    public Observable<ImmutableList<AdapterItem>> call(SpotifyResponse spotifyResponse) {
+                    public Observable<ImmutableList<AdapterItem>> call(final SpotifyResponse spotifyResponse) {
                         return Observable.just(ImmutableList.copyOf(Lists.transform(spotifyResponse.getTracks().getItems(),
                                 new Function<Item, AdapterItem>() {
                                     @Nullable
                                     @Override
                                     public AdapterItem apply(@Nullable Item item) {
+                                        String offset = spotifyResponse.getTracks().getOffset();
+                                        if (item.getFakeOffset() == null) {
+                                            item.setFakeOffset(spotifyResponse.getTracks().getOffset());
+                                        }
                                         return new AdapterItem(
                                                 item.getId(),
-                                                item.getItemName()
+                                                item.getItemName(),
+                                                item.getFakeOffset()
                                         );
                                     }
                                 })));
@@ -71,17 +78,25 @@ public class RetrofitPresenter {
         return openDetailsSubject;
     }
 
+    public Observer<Object> loadMoreObserver() {
+        return this.spotifyResponseDao.loadMoreObserver();
+    }
+
     public class AdapterItem implements SimpleDetector.Detectable<AdapterItem> {
 
         @Nonnull
         private final String id;
         @Nullable
         private final String name;
+        @Nonnull
+        private final String offset;
 
         public AdapterItem(@Nonnull String id,
-                           @Nullable String name) {
+                           @Nullable String name,
+                           @Nonnull String offset) {
             this.id = id;
             this.name = name;
+            this.offset = offset;
         }
 
         @Nonnull
@@ -92,6 +107,11 @@ public class RetrofitPresenter {
         @Nullable
         public String getName() {
             return name;
+        }
+
+        @Nonnull
+        public String getOffset() {
+            return offset;
         }
 
         @Nonnull
