@@ -71,7 +71,8 @@ public class RetrofitPresenter {
 
     @Nonnull
     public Observable<ResponseOrError<SpotifyResponse>> itemsDaoObservable() {
-        return this.spotifyResponseDao.spotifyItemsObservable();
+        Observable<ResponseOrError<SpotifyResponse>> responseOrErrorObservable = this.spotifyResponseDao.spotifyItemsObservable();
+        return responseOrErrorObservable;
     }
 
     public Observable<AdapterItem> openDetailsObservable() {

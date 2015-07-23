@@ -6,38 +6,27 @@ import com.appunite.rx.ResponseOrError;
 import com.example.admin.rxjavatestapplication.dao.SpotifyResponseDao;
 import com.example.admin.rxjavatestapplication.model.Item;
 import com.example.admin.rxjavatestapplication.model.SpotifyResponse;
-import com.example.admin.rxjavatestapplication.schedulers.ObserveOnScheduler;
-import com.example.admin.rxjavatestapplication.schedulers.SubscribeOnScheduler;
 import com.google.common.base.Function;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
-
-import java.util.List;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 
 import rx.Observable;
-import rx.Scheduler;
 import rx.functions.Func1;
 import rx.subjects.BehaviorSubject;
-import rx.subjects.PublishSubject;
-import rx.subjects.ReplaySubject;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
 public class DetailsPresenter {
 
     @Nonnull
-    private final MyRetroFit myRetroFit;
-    @Nonnull
     private final SpotifyResponseDao spotifyResponseDao;
 
     @Inject
-    public DetailsPresenter(@Nonnull MyRetroFit retroFit,
-                            @Nonnull final SpotifyResponseDao spotifyResponseDao) {
-        myRetroFit = retroFit;
+    public DetailsPresenter(@Nonnull final SpotifyResponseDao spotifyResponseDao) {
         this.spotifyResponseDao = spotifyResponseDao;
     }
 
@@ -45,12 +34,13 @@ public class DetailsPresenter {
     public DetailsPresenterFromId getPresenter(@Nonnull final String id,
                                                @Nonnull final String offset) {
         checkNotNull(id);
+        checkNotNull(offset);
         return new DetailsPresenterFromId(id, offset);
     }
 
     @Nonnull
     public Observable<ResponseOrError<SpotifyResponse>> itemsDaoObservable(String offset) {
-        return this.spotifyResponseDao.TESTspotifyItemsObservable(offset);
+        return this.spotifyResponseDao.clickedItemObservable(offset);
     }
 
     public class DetailsPresenterFromId {

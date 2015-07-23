@@ -39,6 +39,11 @@ public class Item {
         return id;
     }
 
+    public Item(String name, String id) {
+        this.name = name;
+        this.id = id;
+    }
+
     public Item(String name, Album album) {
         this.name = name;
         this.album = album;

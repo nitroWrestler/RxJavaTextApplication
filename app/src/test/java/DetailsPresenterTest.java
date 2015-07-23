@@ -1,10 +1,15 @@
+import com.appunite.rx.ResponseOrError;
+import com.example.admin.rxjavatestapplication.AdapterItemDetails;
 import com.example.admin.rxjavatestapplication.DetailsPresenter;
 import com.example.admin.rxjavatestapplication.MyRetroFit;
+import com.example.admin.rxjavatestapplication.RetrofitPresenter;
+import com.example.admin.rxjavatestapplication.dao.SpotifyResponseDao;
 import com.example.admin.rxjavatestapplication.model.Album;
 import com.example.admin.rxjavatestapplication.model.Images;
 import com.example.admin.rxjavatestapplication.model.Item;
 import com.example.admin.rxjavatestapplication.model.SpotifyResponse;
 import com.example.admin.rxjavatestapplication.model.Tracks;
+import com.google.common.collect.ImmutableList;
 
 import junit.framework.TestCase;
 
@@ -22,8 +27,10 @@ import javax.inject.Inject;
 import dagger.ObjectGraph;
 import dagger.Provides;
 import rx.Observable;
+import rx.functions.Action1;
 import rx.observers.TestObserver;
 import rx.schedulers.Schedulers;
+import rx.subjects.ReplaySubject;
 
 import static com.google.common.truth.Truth.assert_;
 import static org.mockito.Matchers.any;
@@ -39,26 +46,30 @@ public class DetailsPresenterTest extends TestCase {
     DetailsPresenter presenter;
 
     @Mock
-    MyRetroFit myRetroFit;
+    SpotifyResponseDao spotifyResponseDao;
 
+
+    private ReplaySubject<ResponseOrError<SpotifyResponse>> spotifySubject = ReplaySubject.create();
     private DetailsPresenter.DetailsPresenterFromId detailsPresenterFromId;
-
-    private Observable<SpotifyResponse> spotifyResponse;
 
     @Before
     public void setUp() throws Exception {
         MockitoAnnotations.initMocks(this);
 
-        ArrayList<Images> imagesArrayList = new ArrayList<>();
-        imagesArrayList.add(new Images("http://mojurl.com"));
 
-        Item item = new Item("name", "duration", "popularity", new Album("id", imagesArrayList));
-        Tracks tracks = new Tracks(item);
-        SpotifyResponse test = new SpotifyResponse(tracks);
-
-        spotifyResponse = Observable.just(test);
 
         ObjectGraph.create(new Module()).inject(this);
+
+
+//        ArrayList<Images> imagesArrayList = new ArrayList<>();
+//        imagesArrayList.add(new Images("http://mojurl.com"));
+//
+//        Item item = new Item("name", "duration", "popularity", new Album("id", imagesArrayList));
+//        Tracks tracks = new Tracks(item);
+//        SpotifyResponse test = new SpotifyResponse(tracks);
+//
+//        spotifyResponse = Observable.just(test);
+
     }
 
     @Test
@@ -111,10 +122,35 @@ public class DetailsPresenterTest extends TestCase {
         assert_().that(title.getOnNextEvents()).isNotNull();
     }
 
+
+
+    //Trzeba zrobić testy LoadMora i sprawdzic czy konkretnie w stringu jest nazwa z sampleData()
+    @Test
+    public void testTest() throws Exception {
+        final TestObserver<ImmutableList<RetrofitPresenter.AdapterItem>> items = new TestObserver<>();
+
+        spotifySubject.onNext(sampleData());
+
+        assert_().that(items.getOnNextEvents()).hasSize(1);
+        assert_().that(items.getOnNextEvents().get(0).get(0).getName()).isEqualTo("nameItem");
+        assert_().that(items.getOnNextEvents().get(0).get(0).getId()).isEqualTo("idItem");
+    }
+
     private TestObserver<String> setUpTests() {
-        when(myRetroFit.listTracks()).thenReturn(spotifyResponse);
-        detailsPresenterFromId = presenter.getPresenter("1");
+        when(spotifyResponseDao.clickedItemObservable("1")).thenReturn(spotifySubject);
+        detailsPresenterFromId = presenter.getPresenter("1", "1");
         return new TestObserver<>();
+    }
+
+    private ResponseOrError<SpotifyResponse> sampleData() {
+        ArrayList<Images> imagesArrayList = new ArrayList<>();
+        imagesArrayList.add(new Images("http://mojurl.com"));
+
+        Item item = new Item("name", "duration", "popularity", new Album("id", imagesArrayList));
+        ArrayList<Item> itemList = new ArrayList<>();
+        itemList.add(item);
+        Tracks tracks = new Tracks(itemList, "1");
+        return ResponseOrError.fromData(new SpotifyResponse(tracks));
     }
 
     @dagger.Module(
@@ -126,7 +162,7 @@ public class DetailsPresenterTest extends TestCase {
 
         @Provides
         public DetailsPresenter providesDetailsPresenter() {
-            return new DetailsPresenter(myRetroFit, Schedulers.immediate(), Schedulers.immediate());
+            return new DetailsPresenter(spotifyResponseDao);
         }
     }
 }

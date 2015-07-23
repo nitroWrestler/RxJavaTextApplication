@@ -1,35 +1,31 @@
-import android.support.annotation.NonNull;
-
-import com.example.admin.rxjavatestapplication.MyRetroFit;
+import com.appunite.rx.ResponseOrError;
 import com.example.admin.rxjavatestapplication.RetrofitPresenter;
-import com.example.admin.rxjavatestapplication.model.Album;
+import com.example.admin.rxjavatestapplication.dao.SpotifyResponseDao;
 import com.example.admin.rxjavatestapplication.model.Item;
 import com.example.admin.rxjavatestapplication.model.SpotifyResponse;
 import com.example.admin.rxjavatestapplication.model.Tracks;
+import com.google.common.collect.ImmutableList;
 
 import junit.framework.TestCase;
 
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.mockito.runners.MockitoJUnitRunner;
 
-import java.util.List;
+import java.util.ArrayList;
 
+import javax.annotation.Nonnull;
 import javax.inject.Inject;
 
 import dagger.ObjectGraph;
 import dagger.Provides;
-import rx.Observable;
-import rx.schedulers.Schedulers;
+import rx.observers.TestObserver;
+import rx.subjects.ReplaySubject;
 
 import static com.google.common.truth.Truth.assert_;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -39,79 +35,74 @@ public class RetrofitPresenterTest extends TestCase {
     RetrofitPresenter presenter;
 
     @Mock
-    RetrofitPresenter.Listener listener;
+    SpotifyResponseDao spotifyResponseDao;
 
-    @Mock
-    MyRetroFit myRetroFit;
-
-    @Captor
-    ArgumentCaptor<List<RetrofitPresenter.AdapterItem>> spotifyResponseArgumentCaptor;
-
-    private Observable<SpotifyResponse> spotifyResponse;
+    private ReplaySubject<ResponseOrError<SpotifyResponse>> spotifySubject = ReplaySubject.create();
 
     @Before
     public void setUp() {
         MockitoAnnotations.initMocks(this);
 
-        Item item = new Item("name", new Album("id"));
-        Tracks tracks = new Tracks(item);
-        SpotifyResponse test = new SpotifyResponse(tracks);
-
-        spotifyResponse = Observable.just(test);
+        when(spotifyResponseDao.spotifyItemsObservable()).thenReturn(spotifySubject);
 
         ObjectGraph.create(new Module()).inject(this);
     }
 
     @Test
     public void testAfterStart_presenterIsNotNull() throws Exception {
-        when(myRetroFit.listTracks()).thenReturn(spotifyResponse);
         assert_().that(presenter).isNotNull();
     }
 
-    @Test
-    public void testAfterStart_showProgressIsTrue() throws Exception {
-        when(myRetroFit.listTracks()).thenReturn(spotifyResponse);
-        presenter.register(listener);
-        verify(listener).showProgress(true);
+    @Nonnull
+    private ResponseOrError<SpotifyResponse> sampleData() {
+        final Item item = new Item("nameItem", "idItem");
+        final ArrayList<Item> itemList = new ArrayList<>();
+        itemList.add(item);
+        final Tracks tracks = new Tracks(itemList, "50");
+        return ResponseOrError.fromData(new SpotifyResponse(tracks));
     }
 
     @Test
-    public void testAfterStart_updateDataWorks_andAfterHideProgress() throws Exception {
-        when(myRetroFit.listTracks()).thenReturn(spotifyResponse);
-        presenter.register(listener);
+    public void testBeforeDownload_doNotPropagateItems() throws Exception {
+        final TestObserver<ImmutableList<RetrofitPresenter.AdapterItem>> items = new TestObserver<>();
+        presenter.listObservable().subscribe(items);
 
-        assertEquals("name", getAdapterItem().get(0).getName());
-
-        verify(listener).showProgress(false);
-        verify(listener, never()).showButtonView(true);
-    }
-
-    private List<RetrofitPresenter.AdapterItem> getAdapterItem() {
-        verify(listener).updateData(spotifyResponseArgumentCaptor.capture());
-        return spotifyResponseArgumentCaptor.getValue();
+        assert_().that(items.getOnNextEvents())
+                .isEmpty();
     }
 
     @Test
-    public void testAfterStart_getError() throws Exception {
-        when(myRetroFit.listTracks())
-                .thenReturn(Observable.<SpotifyResponse>error(new RuntimeException()));
-        presenter.register(listener);
+    public void testAfterDownloadJSON_itemsArePropagated() throws Exception {
+        final TestObserver<ImmutableList<RetrofitPresenter.AdapterItem>> items = new TestObserver<>();
+        presenter.listObservable().subscribe(items);
 
-        verify(listener).showProgress(true);
-        verify(listener).showButtonView(true);
-        verify(listener).showProgress(false);
+        spotifySubject.onNext(sampleData());
+
+        assert_().that(items.getOnNextEvents()).hasSize(1);
+        assert_().that(items.getOnNextEvents().get(0).get(0).getName()).isEqualTo("nameItem");
+        assert_().that(items.getOnNextEvents().get(0).get(0).getId()).isEqualTo("idItem");
     }
 
     @Test
-    public void testAfterButtonClick_checkButtonWork() throws Exception {
-        when(myRetroFit.listTracks())
-                .thenReturn(Observable.<SpotifyResponse>error(new RuntimeException()));
-        presenter.register(listener);
-        when(myRetroFit.listTracks()).thenReturn(spotifyResponse);
-        presenter.refreshClick();
+    public void testAfterClickOnFirstItem_openDetails() throws Exception {
+        // Subscribe to open details
+        final TestObserver<RetrofitPresenter.AdapterItem> openDetails = new TestObserver<>();
+        presenter.openDetailsObservable().subscribe(openDetails);
 
-        verify(listener).showButtonView(true);
-        verify(listener).showButtonView(false);
+        // Download item
+        final TestObserver<ImmutableList<RetrofitPresenter.AdapterItem>> items = new TestObserver<>();
+        presenter.listObservable().subscribe(items);
+        spotifySubject.onNext(sampleData());
+
+        final RetrofitPresenter.AdapterItem itemClick = items.getOnNextEvents().get(0).get(0);
+
+        // User click
+        itemClick.clickObserver().onNext(null);
+
+        // Verify if details opened
+        assert_().that(openDetails.getOnNextEvents())
+                .contains(itemClick);
+
     }
 
     @dagger.Module(
@@ -123,8 +114,54 @@ public class RetrofitPresenterTest extends TestCase {
 
         @Provides
         public RetrofitPresenter providesRetrofitPresenter() {
-            return new RetrofitPresenter(myRetroFit, Schedulers.immediate(), Schedulers.immediate());
+            return new RetrofitPresenter(spotifyResponseDao);
         }
 
     }
 }
+
+//    @Test
+//    public void testAfterStart_showProgressIsTrue() throws Exception {
+//        when(myRetroFit.listTracks()).thenReturn(spotifyResponse);
+//        presenter.register(listener);
+//        verify(listener).showProgress(true);
+//    }
+//
+//    @Test
+//    public void testAfterStart_updateDataWorks_andAfterHideProgress() throws Exception {
+//        when(myRetroFit.listTracks()).thenReturn(spotifyResponse);
+//        presenter.register(listener);
+//
+//        assertEquals("name", getAdapterItem().get(0).getName());
+//
+//        verify(listener).showProgress(false);
+//        verify(listener, never()).showButtonView(true);
+//    }
+//
+//    private List<RetrofitPresenter.AdapterItem> getAdapterItem() {
+//        verify(listener).updateData(spotifyResponseArgumentCaptor.capture());
+//        return spotifyResponseArgumentCaptor.getValue();
+//    }
+//
+//    @Test
+//    public void testAfterStart_getError() throws Exception {
+//        when(myRetroFit.listTracks())
+//                .thenReturn(Observable.<SpotifyResponse>error(new RuntimeException()));
+//        presenter.register(listener);
+//
+//        verify(listener).showProgress(true);
+//        verify(listener).showButtonView(true);
+//        verify(listener).showProgress(false);
+//    }
+//
+//    @Test
+//    public void testAfterButtonClick_checkButtonWork() throws Exception {
+//        when(myRetroFit.listTracks())
+//                .thenReturn(Observable.<SpotifyResponse>error(new RuntimeException()));
+//        presenter.register(listener);
+//        when(myRetroFit.listTracks()).thenReturn(spotifyResponse);
+//        presenter.refreshClick();
+//
+//        verify(listener).showButtonView(true);
+//        verify(listener).showButtonView(false);
+//    }

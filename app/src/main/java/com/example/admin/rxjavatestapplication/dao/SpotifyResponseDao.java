@@ -5,7 +5,6 @@ import com.appunite.rx.android.MyAndroidSchedulers;
 import com.appunite.rx.operators.MoreOperators;
 import com.appunite.rx.operators.OperatorMergeNextToken;
 import com.example.admin.rxjavatestapplication.MyRetroFit;
-import com.example.admin.rxjavatestapplication.RetrofitPresenter;
 import com.example.admin.rxjavatestapplication.model.Item;
 import com.example.admin.rxjavatestapplication.model.SpotifyResponse;
 import com.example.admin.rxjavatestapplication.model.Tracks;
@@ -13,11 +12,9 @@ import com.example.admin.rxjavatestapplication.schedulers.ObserveOnScheduler;
 import com.example.admin.rxjavatestapplication.schedulers.SubscribeOnScheduler;
 import com.google.common.collect.ImmutableList;
 
-import java.util.HashMap;
 import java.util.List;
 
 import javax.annotation.Nonnull;
-import javax.annotation.concurrent.Immutable;
 import javax.inject.Inject;
 
 import rx.Observable;
@@ -85,7 +82,7 @@ public class SpotifyResponseDao {
     }
 
     @Nonnull
-    public Observable<ResponseOrError<SpotifyResponse>> TESTspotifyItemsObservable(String offset) {
+    public Observable<ResponseOrError<SpotifyResponse>> clickedItemObservable(String offset) {
         this.offset = Integer.parseInt(offset);
         return spotifyResponseObservable;
     }

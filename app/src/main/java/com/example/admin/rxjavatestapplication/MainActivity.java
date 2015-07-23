@@ -66,13 +66,6 @@ public class MainActivity extends BaseActivity {
                 .filter(LoadMoreHelper.mapToNeedLoadMore(layoutManager, myListViewAdapter))
                 .compose(lifecycleMainObservable.bindLifecycle())
                 .subscribe(presenter.loadMoreObserver());
-
-//        bRefreshData.setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View v) {
-//                presenter.refreshClick();
-//            }
-//        });
     }
 
     @Nonnull
