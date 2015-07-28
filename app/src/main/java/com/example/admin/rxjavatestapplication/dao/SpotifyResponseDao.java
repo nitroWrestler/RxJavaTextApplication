@@ -71,7 +71,8 @@ public class SpotifyResponseDao {
         spotifyResponseObservable = loadMoreSubject.startWith((Object) null)
                 .lift(mergeSpotifyResponseNextToken)
                 .compose(ResponseOrError.<SpotifyResponse>toResponseOrErrorObservable())
-                .compose(MoreOperators.<SpotifyResponse>repeatOnError(MyAndroidSchedulers.NETWORK_SCHEDULER))
+//                compose ponizej wywalone na potrzeby testow(błędy z MyAndroidSchedulels.NETWORK_SCHEDULER)
+//                .compose(MoreOperators.<SpotifyResponse>repeatOnError(MyAndroidSchedulers.NETWORK_SCHEDULER))
                 .subscribeOn(subscribeOnScheduler)
                 .observeOn(observeOnScheduler);
     }

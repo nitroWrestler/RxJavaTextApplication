@@ -44,16 +44,12 @@ public class Item {
         this.id = id;
     }
 
-    public Item(String name, Album album) {
-        this.name = name;
-        this.album = album;
-    }
-
-    public Item(String name, String duration_ms, String popularity, Album album) {
+    public Item(String name, String id,  String duration_ms, String popularity, Album album) {
         this.name = name;
         this.duration_ms = duration_ms;
         this.popularity = popularity;
         this.album = album;
+        this.id = id;
     }
 
     public void setFakeOffset(String fakeOffset) {

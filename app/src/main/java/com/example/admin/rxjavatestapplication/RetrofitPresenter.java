@@ -48,7 +48,6 @@ public class RetrofitPresenter {
                                     @Nullable
                                     @Override
                                     public AdapterItem apply(@Nullable Item item) {
-                                        String offset = spotifyResponse.getTracks().getOffset();
                                         if (item.getFakeOffset() == null) {
                                             item.setFakeOffset(spotifyResponse.getTracks().getOffset());
                                         }
@@ -71,8 +70,7 @@ public class RetrofitPresenter {
 
     @Nonnull
     public Observable<ResponseOrError<SpotifyResponse>> itemsDaoObservable() {
-        Observable<ResponseOrError<SpotifyResponse>> responseOrErrorObservable = this.spotifyResponseDao.spotifyItemsObservable();
-        return responseOrErrorObservable;
+        return this.spotifyResponseDao.spotifyItemsObservable();
     }
 
     public Observable<AdapterItem> openDetailsObservable() {

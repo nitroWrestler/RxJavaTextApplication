@@ -15,6 +15,7 @@ import javax.annotation.Nullable;
 import javax.inject.Inject;
 
 import rx.Observable;
+import rx.functions.Action0;
 import rx.functions.Func1;
 import rx.subjects.BehaviorSubject;
 
@@ -47,6 +48,7 @@ public class DetailsPresenter {
 
         @Nonnull
         private final BehaviorSubject<AdapterItemDetails> mRequestSubject = BehaviorSubject.create();
+
         @Nonnull
         private final Observable<ResponseOrError<String>> mNameObservable, mIdObservable, mDurationObservable,
                 mPopularityObservable, mCdCoverImage;
@@ -85,6 +87,12 @@ public class DetailsPresenter {
                                 }
                             }
                             return Observable.error(new Throwable());
+                        }
+                    })
+                    .doOnCompleted(new Action0() {
+                        @Override
+                        public void call() {
+
                         }
                     })
                     .subscribe(mRequestSubject);
