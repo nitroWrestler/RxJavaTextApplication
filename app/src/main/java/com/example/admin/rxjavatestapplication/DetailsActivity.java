@@ -1,5 +1,6 @@
 package com.example.admin.rxjavatestapplication;
 
+import android.animation.Animator;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
@@ -7,10 +8,17 @@ import android.os.Bundle;
 import android.support.v4.app.ActivityCompat;
 import android.util.Log;
 import android.view.View;
+import android.view.ViewAnimationUtils;
+import android.view.ViewTreeObserver;
+import android.view.Window;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.appunite.rx.android.MyAndroidSchedulers;
+import com.squareup.picasso.Callback;
 import com.squareup.picasso.Picasso;
+
+import java.util.concurrent.TimeUnit;
 
 import javax.annotation.Nonnull;
 import javax.inject.Inject;
@@ -23,7 +31,7 @@ import rx.functions.Func1;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-public class DetailsActivity extends BaseActivity{
+public class DetailsActivity extends BaseActivity {
 
     private DetailsPresenter detailsPresenter;
 
@@ -55,6 +63,9 @@ public class DetailsActivity extends BaseActivity{
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_details);
 
+        // czeka az zaladuje sie obrazek i wtedy trzeba wystartowac to z startPostPonedEnterTransision
+        postponeEnterTransition();
+
         final String id = checkNotNull(getIntent().getStringExtra(EXTRA_ID));
         final String offset = checkNotNull(getIntent().getStringExtra(EXTRA_OFFSET));
 
@@ -77,7 +88,18 @@ public class DetailsActivity extends BaseActivity{
 
         presenterFromId.nameObservable()
                 .compose(lifecycleMainObservable.<String>bindLifecycle())
-                .subscribe(ViewActions.setText(nameOfSong));
+                .subscribe(new Action1<String>() {
+                               @Override
+                               public void call(String s) {
+//                                   ViewActions.setText(nameOfSong);
+                                   nameOfSong.setText(s);
+
+
+
+                               }
+                           });
+
+
 
         presenterFromId.idObservable()
                 .compose(lifecycleMainObservable.<String>bindLifecycle())
@@ -95,13 +117,31 @@ public class DetailsActivity extends BaseActivity{
                 .compose(lifecycleMainObservable.<String>bindLifecycle())
                 .subscribe(new Action1<String>() {
                     @Override
-                    public void call(String s) {
+                    public void call(final String s) {
                         picasso.load(s)
-                                .centerCrop()
                                 .fit()
-                                .into(cdCoverImage);
+                                .into(cdCoverImage, new Callback() {
+                                    @Override
+                                    public void onSuccess() {
+                                        startPostponedEnterTransition();
+                                    }
+
+                                    @Override
+                                    public void onError() {
+
+                                    }
+                                });
+//
+//                        int cx = cdCoverImage.getMeasuredWidth() / 2;
+//                        int cy = cdCoverImage.getMeasuredHeight() / 2;
+//                        int initialRadius = cdCoverImage.getWidth()/2;
+//
+//                        Animator anim = ViewAnimationUtils.createCircularReveal(cdCoverImage, cx, cy, 0, initialRadius);
+//
+//                        anim.start();
                     }
                 });
+
     }
 
     @dagger.Module(
@@ -111,5 +151,6 @@ public class DetailsActivity extends BaseActivity{
             },
             addsTo = MainApplication.Module.class
     )
-    class Module {}
+    class Module {
+    }
 }

@@ -52,15 +52,15 @@ public class SpotifyResponseDao {
                             @Override
                             public Observable<SpotifyResponse> call(SpotifyResponse spotifyResponse) {
                                 if (spotifyResponse == null) {
-                                    return myRetroFit.listTracks(offset)
-                                            .subscribeOn(subscribeOnScheduler)
-                                            .observeOn(observeOnScheduler);
+                                    return myRetroFit.listTracks(offset);
+//                                            .subscribeOn(subscribeOnScheduler)
+//                                            .observeOn(observeOnScheduler);
                                 } else {
                                     offset += 50;
                                     final Observable<SpotifyResponse> apiRequest = myRetroFit
-                                            .listTracks(offset)
-                                            .subscribeOn(subscribeOnScheduler)
-                                            .observeOn(observeOnScheduler);
+                                            .listTracks(offset);
+//                                            .subscribeOn(subscribeOnScheduler)
+//                                            .observeOn(observeOnScheduler);
                                     return Observable.just(spotifyResponse).zipWith(apiRequest,
                                             new MergeTwoResponses());
                                 }
@@ -72,7 +72,7 @@ public class SpotifyResponseDao {
                 .lift(mergeSpotifyResponseNextToken)
                 .compose(ResponseOrError.<SpotifyResponse>toResponseOrErrorObservable())
 //                compose ponizej wywalone na potrzeby testow(błędy z MyAndroidSchedulels.NETWORK_SCHEDULER)
-//                .compose(MoreOperators.<SpotifyResponse>repeatOnError(MyAndroidSchedulers.NETWORK_SCHEDULER))
+                .compose(MoreOperators.<SpotifyResponse>repeatOnError(MyAndroidSchedulers.NETWORK_SCHEDULER))
                 .subscribeOn(subscribeOnScheduler)
                 .observeOn(observeOnScheduler);
     }
