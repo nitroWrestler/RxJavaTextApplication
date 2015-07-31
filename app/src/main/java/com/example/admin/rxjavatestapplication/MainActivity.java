@@ -22,6 +22,7 @@ import butterknife.ButterKnife;
 import butterknife.InjectView;
 import dagger.Provides;
 import rx.functions.Action1;
+import rx.functions.Func1;
 
 public class MainActivity extends BaseActivity {
 
@@ -66,6 +67,7 @@ public class MainActivity extends BaseActivity {
                 .filter(LoadMoreHelper.mapToNeedLoadMore(layoutManager, myListViewAdapter))
                 .compose(lifecycleMainObservable.bindLifecycle())
                 .subscribe(presenter.loadMoreObserver());
+
     }
 
     @Nonnull
