@@ -1,6 +1,7 @@
 package com.example.admin.rxjavatestapplication;
 
 import android.util.Log;
+import android.widget.ImageView;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -8,6 +9,7 @@ import javax.inject.Inject;
 
 import com.appunite.rx.ObservableExtensions;
 import com.appunite.rx.ResponseOrError;
+import com.appunite.rx.functions.BothParams;
 import com.example.admin.rxjavatestapplication.dao.SpotifyResponseDao;
 import com.example.admin.rxjavatestapplication.detector.SimpleDetector;
 import com.example.admin.rxjavatestapplication.model.Item;
@@ -28,7 +30,7 @@ public class RetrofitPresenter {
 
 
     @Nonnull
-    private final PublishSubject<AdapterItem> openDetailsSubject = PublishSubject.create();
+    private final PublishSubject<BothParams<RetrofitPresenter.AdapterItem, ImageView>> openDetailsSubject = PublishSubject.create();
     @Nonnull
     private final Observable<ImmutableList<AdapterItem>> immutableListObservable;
     @Nonnull
@@ -54,7 +56,8 @@ public class RetrofitPresenter {
                                         return new AdapterItem(
                                                 item.getId(),
                                                 item.getItemName(),
-                                                item.getFakeOffset()
+                                                item.getFakeOffset(),
+                                                item.getAlbum().getImages().get(0).getUrl()
                                         );
                                     }
                                 })));
@@ -73,7 +76,7 @@ public class RetrofitPresenter {
         return this.spotifyResponseDao.spotifyItemsObservable();
     }
 
-    public Observable<AdapterItem> openDetailsObservable() {
+    public Observable<BothParams<RetrofitPresenter.AdapterItem, ImageView>> openDetailsObservable() {
         return openDetailsSubject;
     }
 
@@ -89,13 +92,17 @@ public class RetrofitPresenter {
         private final String name;
         @Nonnull
         private final String offset;
+        @Nonnull
+        private final String previewImageUrl;
 
         public AdapterItem(@Nonnull String id,
                            @Nullable String name,
-                           @Nonnull String offset) {
+                           @Nonnull String offset,
+                           @Nonnull String previewImageUrl) {
             this.id = id;
             this.name = name;
             this.offset = offset;
+            this.previewImageUrl = previewImageUrl;
         }
 
         @Nonnull
@@ -114,11 +121,16 @@ public class RetrofitPresenter {
         }
 
         @Nonnull
-        public Observer<Object> clickObserver() {
-            return Observers.create(new Action1<Object>() {
+        public String getPreviewImageUrl() {
+            return previewImageUrl;
+        }
+
+        @Nonnull
+        public Observer<ImageView> clickObserver() {
+            return Observers.create(new Action1<ImageView>() {
                 @Override
-                public void call(Object o) {
-                    openDetailsSubject.onNext(AdapterItem.this);
+                public void call(ImageView imageViewCdCover) {
+                    openDetailsSubject.onNext(new BothParams<>(AdapterItem.this, imageViewCdCover));
                 }
             });
         }
@@ -131,6 +143,22 @@ public class RetrofitPresenter {
         @Override
         public boolean same(@Nonnull AdapterItem item) {
             return equals(item);
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            AdapterItem that = (AdapterItem) o;
+            return Objects.equal(id, that.id) &&
+                    Objects.equal(name, that.name) &&
+                    Objects.equal(offset, that.offset) &&
+                    Objects.equal(previewImageUrl, that.previewImageUrl);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hashCode(id, name, offset, previewImageUrl);
         }
     }
 }

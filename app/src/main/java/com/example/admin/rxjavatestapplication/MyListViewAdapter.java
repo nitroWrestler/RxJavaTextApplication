@@ -1,16 +1,20 @@
 package com.example.admin.rxjavatestapplication;
 
 
+import android.animation.Animator;
 import android.content.Context;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewAnimationUtils;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.example.admin.rxjavatestapplication.detector.ChangesDetector;
 import com.example.admin.rxjavatestapplication.detector.SimpleDetector;
 import com.google.common.collect.ImmutableList;
+import com.squareup.picasso.Picasso;
 
 import java.util.List;
 
@@ -19,8 +23,10 @@ import javax.inject.Inject;
 
 import butterknife.ButterKnife;
 import butterknife.InjectView;
+import rx.android.view.OnClickEvent;
 import rx.android.view.ViewObservable;
 import rx.functions.Action1;
+import rx.functions.Func1;
 import rx.subscriptions.CompositeSubscription;
 
 abstract class BaseViewHolder extends RecyclerView.ViewHolder {
@@ -29,7 +35,7 @@ abstract class BaseViewHolder extends RecyclerView.ViewHolder {
         super(itemView);
     }
 
-    public abstract void bind (@Nonnull RetrofitPresenter.AdapterItem item);
+    public abstract void bind(@Nonnull RetrofitPresenter.AdapterItem item);
 
     public abstract void recycle();
 }
@@ -40,17 +46,20 @@ public class MyListViewAdapter extends RecyclerView.Adapter<BaseViewHolder> impl
     @Nonnull
     private final ChangesDetector<RetrofitPresenter.AdapterItem, RetrofitPresenter.AdapterItem> changesDetector;
     @Nonnull
-    private ImmutableList<RetrofitPresenter.AdapterItem> mItems = ImmutableList.of();
+    private final Picasso picasso;
+    @Nonnull
+    private List<RetrofitPresenter.AdapterItem> mItems = ImmutableList.of();
 
     @Inject
-    public MyListViewAdapter() {
+    public MyListViewAdapter(@Nonnull final Picasso picasso) {
+        this.picasso = picasso;
         this.changesDetector = new ChangesDetector<>(new SimpleDetector<RetrofitPresenter.AdapterItem>());
     }
 
     @Override
     public BaseViewHolder onCreateViewHolder(ViewGroup viewGroup, int i) {
         final View view = LayoutInflater.from(viewGroup.getContext())
-                .inflate(android.R.layout.simple_list_item_1, viewGroup, false);
+                .inflate(R.layout.activity_main_items_cell, viewGroup, false);
         return new MyViewHolder(view);
     }
 
@@ -72,14 +81,18 @@ public class MyListViewAdapter extends RecyclerView.Adapter<BaseViewHolder> impl
 
     @Override
     public void call(ImmutableList<RetrofitPresenter.AdapterItem> adapterItems) {
-        this.mItems = adapterItems;
+        mItems = ImmutableList.copyOf(adapterItems);
         changesDetector.newData(this, adapterItems, false);
     }
 
     public class MyViewHolder extends BaseViewHolder {
 
-        @InjectView(android.R.id.text1)
+        @InjectView(R.id.ivPreviewImageView)
+        ImageView mImageView;
+        @InjectView(R.id.tvNameOfSongNearImageView)
         TextView mTextView;
+        @InjectView(R.id.layoutOneItemCell)
+        View layoutItemCell;
 
         private CompositeSubscription subscription;
 
@@ -89,10 +102,20 @@ public class MyListViewAdapter extends RecyclerView.Adapter<BaseViewHolder> impl
         }
 
         public void bind(@Nonnull RetrofitPresenter.AdapterItem item) {
+
+            picasso.load(item.getPreviewImageUrl())
+                    .into(mImageView);
             String b = item.getName() + ", Offset: " + item.getOffset();
             mTextView.setText(b);
-            subscription = new CompositeSubscription(
-                ViewObservable.clicks(mTextView).subscribe(item.clickObserver())
+
+            subscription = new CompositeSubscription(ViewObservable.clicks(layoutItemCell)
+                            .map(new Func1<OnClickEvent, ImageView>() {
+                                @Override
+                                public ImageView call(OnClickEvent onClickEvent) {
+                                    return mImageView;
+                                }
+                            })
+                            .subscribe(item.clickObserver())
             );
         }
 
@@ -100,5 +123,8 @@ public class MyListViewAdapter extends RecyclerView.Adapter<BaseViewHolder> impl
         public void recycle() {
             subscription.unsubscribe();
         }
+
+
     }
+
 }
