@@ -9,16 +9,23 @@ public class Tracks {
 
     private List<Item> items;
 
+    private Integer total;
+
     public List<Item> getItems() {
         return items;
     }
 
-    public Tracks(List<Item> items, String offset) {
+    public Tracks(List<Item> items, String offset, Integer total) {
         this.items = items;
         this.offset = offset;
+        this.total = total;
     }
 
     public String getOffset() {
         return offset;
+    }
+
+    public int getTotal() {
+        return total;
     }
 }

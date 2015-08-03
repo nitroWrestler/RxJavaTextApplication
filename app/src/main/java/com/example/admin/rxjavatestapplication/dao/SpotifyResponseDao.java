@@ -55,7 +55,11 @@ public class SpotifyResponseDao {
                                     return myRetroFit.listTracks(offset);
 //                                            .subscribeOn(subscribeOnScheduler)
 //                                            .observeOn(observeOnScheduler);
-                                } else {
+                                } else if (spotifyResponse.getTracks().getTotal() < offset) {
+                                    return Observable.never();
+                                }
+
+                                else {
                                     offset += 50;
                                     final Observable<SpotifyResponse> apiRequest = myRetroFit
                                             .listTracks(offset);
@@ -99,7 +103,7 @@ public class SpotifyResponseDao {
                     .addAll(previous.getTracks().getItems())
                     .addAll(moreData.getTracks().getItems())
                     .build();
-            return new SpotifyResponse(new Tracks(items, moreData.getTracks().getOffset()));
+            return new SpotifyResponse(new Tracks(items, moreData.getTracks().getOffset(), moreData.getTracks().getTotal()));
         }
     }
 }

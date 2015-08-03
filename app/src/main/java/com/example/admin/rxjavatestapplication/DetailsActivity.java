@@ -93,12 +93,8 @@ public class DetailsActivity extends BaseActivity {
                                public void call(String s) {
 //                                   ViewActions.setText(nameOfSong);
                                    nameOfSong.setText(s);
-
-
-
                                }
                            });
-
 
 
         presenterFromId.idObservable()
