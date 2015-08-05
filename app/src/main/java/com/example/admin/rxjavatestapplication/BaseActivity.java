@@ -3,6 +3,7 @@ package com.example.admin.rxjavatestapplication;
 import android.os.Bundle;
 import android.os.PersistableBundle;
 import android.support.v4.app.FragmentActivity;
+import android.support.v7.app.AppCompatActivity;
 
 import com.appunite.rx.android.LifecycleMainObservable;
 
@@ -11,7 +12,7 @@ import javax.annotation.Nonnull;
 import rx.android.lifecycle.LifecycleEvent;
 import rx.subjects.BehaviorSubject;
 
-public class BaseActivity extends FragmentActivity {
+public class BaseActivity extends AppCompatActivity {
     @Nonnull
     private final BehaviorSubject<LifecycleEvent> lifecycleSubject = BehaviorSubject.create();
     protected final LifecycleMainObservable lifecycleMainObservable = new LifecycleMainObservable(

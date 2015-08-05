@@ -2,10 +2,18 @@ package com.example.admin.rxjavatestapplication;
 
 import android.app.Activity;
 import android.os.Bundle;
+import android.support.design.widget.CollapsingToolbarLayout;
+import android.support.design.widget.CoordinatorLayout;
+import android.support.design.widget.FloatingActionButton;
+import android.support.design.widget.Snackbar;
+import android.support.design.widget.TabLayout;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.ActivityOptionsCompat;
+import android.support.v4.widget.DrawerLayout;
+import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.Toolbar;
 import android.transition.TransitionManager;
 import android.util.Log;
 import android.view.View;
@@ -35,14 +43,22 @@ public class MainActivity extends BaseActivity {
 
     @InjectView(R.id.listView)
     RecyclerView recyclerView;
-//    @InjectView(R.id.progressBarMainActivity)
-//    View progressView;
-//    @InjectView(R.id.viewRefreshData)
-//    View buttonView;
-//    @InjectView(R.id.bRefreshData)
-//    Button bRefreshData;
+    @InjectView(R.id.root_coordinator)
+    CoordinatorLayout mCoordinator;
+    @InjectView(R.id.collapsing_toolbar_layout)
+    CollapsingToolbarLayout mCollapsingToolbarLayout;
+    @InjectView(R.id.fab)
+    FloatingActionButton mFloatingActionButton;
+    @InjectView(R.id.drawer_layout)
+    DrawerLayout mDrawerLayout;
+    @InjectView(R.id.app_bar)
+    Toolbar mToolbar;
+    @InjectView(R.id.tab_layout)
+    TabLayout mTabLayout;
+
 
     private RetrofitPresenter presenter;
+    private ActionBarDrawerToggle mDrawerToggle;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -50,6 +66,12 @@ public class MainActivity extends BaseActivity {
         setContentView(R.layout.activity_main);
 
         ButterKnife.inject(this);
+
+        setSupportActionBar(mToolbar);
+
+        mDrawerToggle = new ActionBarDrawerToggle(this, mDrawerLayout, mToolbar, R.string.open, R.string.close);
+        mDrawerLayout.setDrawerListener(mDrawerToggle);
+        mDrawerToggle.syncState();
 
         presenter = MainApplication
                 .fromApplication(getApplication())
@@ -79,6 +101,15 @@ public class MainActivity extends BaseActivity {
                 .filter(LoadMoreHelper.mapToNeedLoadMore(layoutManager, myListViewAdapter))
                 .compose(lifecycleMainObservable.bindLifecycle())
                 .subscribe(presenter.loadMoreObserver());
+
+        mFloatingActionButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Snackbar.make(mCoordinator, "FAB Clicked", Snackbar.LENGTH_SHORT).setAction("DISMISS", null).show();
+            }
+        });
+
+        mCollapsingToolbarLayout.setTitle(getResources().getString(R.string.app_name));
 
     }
 
