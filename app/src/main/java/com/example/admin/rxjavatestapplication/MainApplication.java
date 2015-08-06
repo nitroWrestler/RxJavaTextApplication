@@ -3,6 +3,7 @@ package com.example.admin.rxjavatestapplication;
 import android.app.Application;
 import android.content.Context;
 
+import com.example.admin.rxjavatestapplication.design.TabFragment;
 import com.example.admin.rxjavatestapplication.schedulers.ObserveOnScheduler;
 import com.example.admin.rxjavatestapplication.schedulers.SubscribeOnScheduler;
 import com.squareup.picasso.Picasso;
@@ -42,7 +43,7 @@ public class MainApplication extends Application {
             injects = MainApplication.class,
             library = true
     )
-    class Module {
+    public class Module {
 
         @Provides
         @Singleton

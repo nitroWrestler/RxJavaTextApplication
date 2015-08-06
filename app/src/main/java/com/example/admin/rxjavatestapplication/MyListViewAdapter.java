@@ -123,8 +123,5 @@ public class MyListViewAdapter extends RecyclerView.Adapter<BaseViewHolder> impl
         public void recycle() {
             subscription.unsubscribe();
         }
-
-
     }
-
 }
