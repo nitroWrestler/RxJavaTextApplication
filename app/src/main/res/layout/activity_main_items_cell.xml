@@ -13,7 +13,8 @@
         tools:src="@drawable/testimage"
         android:id="@+id/ivPreviewImageView"
         android:padding="3dp"
-        android:transitionName="profile"/>
+        android:transitionName="profile"
+        android:elevation="0dp"/>
 
     <TextView
         android:layout_width="match_parent"

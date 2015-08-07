@@ -32,11 +32,6 @@ import rx.functions.Action1;
 
 public class MainActivity extends BaseActivity {
 
-//    @Inject
-//    MyListViewAdapter myListViewAdapter;
-
-//    @InjectView(R.id.listView)
-//    RecyclerView recyclerView;
     @InjectView(R.id.root_coordinator)
     CoordinatorLayout mCoordinator;
     @InjectView(R.id.collapsing_toolbar_layout)
@@ -53,7 +48,6 @@ public class MainActivity extends BaseActivity {
     ViewPager mPager;
 
 
-    private RetrofitPresenter presenter;
     private ActionBarDrawerToggle mDrawerToggle;
     private YourPagerAdapter yourPagerAdapter;
 
@@ -65,22 +59,11 @@ public class MainActivity extends BaseActivity {
         ButterKnife.inject(this);
 
         setSupportActionBar(mToolbar);
+//        mToolbar.setPadding(0, getStatusBarHeight(), 0, 0);
 
         mDrawerToggle = new ActionBarDrawerToggle(this, mDrawerLayout, mToolbar, R.string.open, R.string.close);
         mDrawerLayout.setDrawerListener(mDrawerToggle);
         mDrawerToggle.syncState();
-
-        presenter = MainApplication
-                .fromApplication(getApplication())
-                .objectGraph()
-                .plus(new Module())
-                .get(RetrofitPresenter.class);
-
-        MainApplication
-                .fromApplication(getApplication())
-                .objectGraph()
-                .plus(new Module())
-                .inject(this);
 
         yourPagerAdapter = new YourPagerAdapter(getSupportFragmentManager());
         mPager.setAdapter(yourPagerAdapter);
@@ -91,24 +74,6 @@ public class MainActivity extends BaseActivity {
         mTabLayout.setupWithViewPager(mPager);
         mPager.addOnPageChangeListener(new TabLayout.TabLayoutOnPageChangeListener(mTabLayout));
 
-
-        final LinearLayoutManager layoutManager = new LinearLayoutManager(this);
-//        recyclerView.setLayoutManager(layoutManager);
-//        recyclerView.setAdapter(myListViewAdapter);
-
-//        presenter.listObservable()
-//                .compose(lifecycleMainObservable.<ImmutableList<RetrofitPresenter.AdapterItem>>bindLifecycle())
-//                .subscribe(myListViewAdapter);
-
-        presenter.openDetailsObservable()
-                .compose(lifecycleMainObservable.<BothParams<RetrofitPresenter.AdapterItem, ImageView>>bindLifecycle())
-                .subscribe(startDetailsActivityAction(this));
-
-//        MoreViewObservables.scroll(recyclerView)
-//                .filter(LoadMoreHelper.mapToNeedLoadMore(layoutManager, myListViewAdapter))
-//                .compose(lifecycleMainObservable.bindLifecycle())
-//                .subscribe(presenter.loadMoreObserver());
-
         mFloatingActionButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -117,22 +82,15 @@ public class MainActivity extends BaseActivity {
         });
 
         mCollapsingToolbarLayout.setTitle(getResources().getString(R.string.app_name));
-
     }
 
-    @Nonnull
-    private static Action1<BothParams<RetrofitPresenter.AdapterItem, ImageView>> startDetailsActivityAction(final Activity activity) {
-        return new Action1<BothParams<RetrofitPresenter.AdapterItem, ImageView>>() {
-            @Override
-            public void call(BothParams<RetrofitPresenter.AdapterItem, ImageView> bothParams) {
-                //noinspection unchecked
-                ActivityOptionsCompat options =  ActivityOptionsCompat.makeSceneTransitionAnimation(activity, bothParams.param2(), "profile");
-                ActivityCompat.startActivity(activity,
-                        DetailsActivity.getIntent(activity, bothParams.param1().getId(), bothParams.param1().getOffset()),
-                        options.toBundle());
-
-            }
-        };
+    public int getStatusBarHeight() {
+        int result = 0;
+        int resourceId = getResources().getIdentifier("status_bar_height", "dimen", "android");
+        if (resourceId > 0) {
+            result = getResources().getDimensionPixelSize(resourceId);
+        }
+        return result;
     }
 
     class YourPagerAdapter extends FragmentStatePagerAdapter {
@@ -169,30 +127,3 @@ public class MainActivity extends BaseActivity {
     class Module {
     }
 }
-
-
-//    public static class MyFragment extends Fragment {
-//        @Inject
-//        MyListViewAdapter myListViewAdapter;
-//
-//        public static final String ARG_PAGE = "arg_page";
-//
-//        public static MyFragment newInstance(int pageNumber) {
-//            MyFragment myFragment = new MyFragment();
-//            Bundle arguments = new Bundle();
-//            arguments.putInt(ARG_PAGE, pageNumber + 1);
-//            myFragment.setArguments(arguments);
-//            return myFragment;
-//        }
-//
-//        @Nullable
-//        @Override
-//        public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-//            Bundle arguments = getArguments();
-//            int pageNumber = arguments.getInt(ARG_PAGE);
-//            RecyclerView recyclerView = new RecyclerView(getActivity());
-//            recyclerView.setAdapter(myListViewAdapter);
-//            recyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
-//            return recyclerView;
-//        }
-//    }
