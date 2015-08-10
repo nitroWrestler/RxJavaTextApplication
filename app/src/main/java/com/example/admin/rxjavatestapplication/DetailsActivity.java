@@ -11,6 +11,7 @@ import android.view.View;
 import android.view.ViewAnimationUtils;
 import android.view.ViewTreeObserver;
 import android.view.Window;
+import android.view.WindowManager;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -89,12 +90,13 @@ public class DetailsActivity extends BaseActivity {
         presenterFromId.nameObservable()
                 .compose(lifecycleMainObservable.<String>bindLifecycle())
                 .subscribe(new Action1<String>() {
-                               @Override
-                               public void call(String s) {
+                    @Override
+                    public void call(String s) {
 //                                   ViewActions.setText(nameOfSong);
-                                   nameOfSong.setText(s);
-                               }
-                           });
+                        nameOfSong.setText(s);
+                    }
+                });
+
 
 
         presenterFromId.idObservable()

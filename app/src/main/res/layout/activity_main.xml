@@ -4,28 +4,25 @@
     android:id="@+id/drawer_layout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".MainActivity"
-    android:background="#00000000"
-    android:fitsSystemWindows="true">
+    tools:context=".MainActivity">
 
     <android.support.design.widget.CoordinatorLayout
         android:id="@+id/root_coordinator"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:fitsSystemWindows="true">
+        android:layout_height="match_parent">
 
         <android.support.design.widget.AppBarLayout
             android:id="@+id/app_bar_layout"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            app:layout_behavior="com.example.admin.rxjavatestapplication.design.ScrollAppBarBehavior">
+            >
 
             <android.support.design.widget.CollapsingToolbarLayout
                 android:id="@+id/collapsing_toolbar_layout"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 app:contentScrim="?attr/colorPrimary"
-                app:layout_scrollFlags="scroll|enterAlways">
+                app:layout_scrollFlags="scroll|enterAlwaysCollapsed">
 
                 <ImageView
                     android:layout_width="match_parent"
@@ -39,14 +36,14 @@
                     android:layout_width="match_parent"
                     android:layout_height="?attr/actionBarSize"
                     android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar"
-                    app:layout_collapseMode="pin" />
+                    app:layout_collapseMode="pin"
+                    android:layout_marginTop="25dp"/>
 
             </android.support.design.widget.CollapsingToolbarLayout>
 
             <android.support.design.widget.CollapsingToolbarLayout
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                app:layout_scrollFlags="scroll|enterAlways">
+                android:layout_height="wrap_content">
 
                 <android.support.design.widget.TabLayout
                     android:id="@+id/tab_layout"
@@ -56,8 +53,7 @@
                     app:layout_collapseMode="pin"
                     app:tabIndicatorColor="@color/colorPrimary"
                     app:tabSelectedTextColor="@android:color/white"
-                    app:tabTextColor="#EEE"
-                    android:fitsSystemWindows="true"/>
+                    app:tabTextColor="#EEE" />
 
             </android.support.design.widget.CollapsingToolbarLayout>
 
@@ -87,6 +83,7 @@
         android:layout_width="wrap_content"
         android:layout_height="match_parent"
         android:layout_gravity="start"
+        app:headerLayout="@layout/drawer_header"
         app:menu="@menu/menu_drawer" />
 
 </android.support.v4.widget.DrawerLayout>
