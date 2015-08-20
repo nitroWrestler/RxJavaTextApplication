@@ -129,14 +129,6 @@ public class DetailsActivity extends BaseActivity {
 
                                     }
                                 });
-//
-//                        int cx = cdCoverImage.getMeasuredWidth() / 2;
-//                        int cy = cdCoverImage.getMeasuredHeight() / 2;
-//                        int initialRadius = cdCoverImage.getWidth()/2;
-//
-//                        Animator anim = ViewAnimationUtils.createCircularReveal(cdCoverImage, cx, cy, 0, initialRadius);
-//
-//                        anim.start();
                     }
                 });
 

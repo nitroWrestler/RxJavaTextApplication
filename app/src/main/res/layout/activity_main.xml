@@ -9,20 +9,20 @@
     <android.support.design.widget.CoordinatorLayout
         android:id="@+id/root_coordinator"
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="match_parent"
+        app:statusBarBackground="@color/colorPrimaryDark">
 
         <android.support.design.widget.AppBarLayout
             android:id="@+id/app_bar_layout"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            >
+            android:layout_height="wrap_content">
 
             <android.support.design.widget.CollapsingToolbarLayout
                 android:id="@+id/collapsing_toolbar_layout"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
+                android:layout_height="match_parent"
                 app:contentScrim="?attr/colorPrimary"
-                app:layout_scrollFlags="scroll|enterAlwaysCollapsed">
+                app:layout_scrollFlags="scroll|exitUntilCollapsed">
 
                 <ImageView
                     android:layout_width="match_parent"
@@ -35,23 +35,25 @@
                     android:id="@+id/app_bar"
                     android:layout_width="match_parent"
                     android:layout_height="?attr/actionBarSize"
+                    android:layout_marginTop="25dp"
                     android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar"
-                    app:layout_collapseMode="pin"
-                    android:layout_marginTop="25dp"/>
+                    app:layout_collapseMode="pin" />
 
             </android.support.design.widget.CollapsingToolbarLayout>
 
             <android.support.design.widget.CollapsingToolbarLayout
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content">
+                android:layout_height="wrap_content"
+                app:layout_scrollFlags="scroll|exitUntilCollapsed">
 
                 <android.support.design.widget.TabLayout
                     android:id="@+id/tab_layout"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:background="@color/colorAccent"
-                    app:layout_collapseMode="pin"
+                    app:tabGravity="fill"
                     app:tabIndicatorColor="@color/colorPrimary"
+                    app:tabMode="fixed"
                     app:tabSelectedTextColor="@android:color/white"
                     app:tabTextColor="#EEE" />
 

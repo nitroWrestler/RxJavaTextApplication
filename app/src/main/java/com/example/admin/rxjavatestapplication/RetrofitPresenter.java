@@ -28,7 +28,6 @@ import rx.subjects.PublishSubject;
 
 public class RetrofitPresenter {
 
-
     @Nonnull
     private final PublishSubject<BothParams<RetrofitPresenter.AdapterItem, ImageView>> openDetailsSubject = PublishSubject.create();
     @Nonnull
@@ -41,17 +40,17 @@ public class RetrofitPresenter {
         this.spotifyResponseDao = spotifyResponseDao;
 
         immutableListObservable = itemsDaoObservable()
-                .compose(ResponseOrError.<SpotifyResponse>onlySuccess())
-                .flatMap(new Func1<SpotifyResponse, Observable<ImmutableList<AdapterItem>>>() {
+//                .compose(ResponseOrError.<SpotifyResponse>onlySuccess())
+                .flatMap(new Func1<SpotifyResponseDao.CachedResult, Observable<ImmutableList<AdapterItem>>>() {
                     @Override
-                    public Observable<ImmutableList<AdapterItem>> call(final SpotifyResponse spotifyResponse) {
-                        return Observable.just(ImmutableList.copyOf(Lists.transform(spotifyResponse.getTracks().getItems(),
+                    public Observable<ImmutableList<AdapterItem>> call(final SpotifyResponseDao.CachedResult spotifyResponse) {
+                        return Observable.just(ImmutableList.copyOf(Lists.transform(spotifyResponse.getResponse().getTracks().getItems(),
                                 new Function<Item, AdapterItem>() {
                                     @Nullable
                                     @Override
                                     public AdapterItem apply(@Nullable Item item) {
                                         if (item.getFakeOffset() == null) {
-                                            item.setFakeOffset(spotifyResponse.getTracks().getOffset());
+                                            item.setFakeOffset(spotifyResponse.getResponse().getTracks().getOffset());
                                         }
                                         return new AdapterItem(
                                                 item.getId(),
@@ -72,7 +71,7 @@ public class RetrofitPresenter {
     }
 
     @Nonnull
-    public Observable<ResponseOrError<SpotifyResponse>> itemsDaoObservable() {
+    public Observable<SpotifyResponseDao.CachedResult> itemsDaoObservable() {
         return this.spotifyResponseDao.spotifyItemsObservable();
     }
 

@@ -3,10 +3,21 @@ package com.example.admin.rxjavatestapplication;
 import android.app.Application;
 import android.content.Context;
 
-import com.example.admin.rxjavatestapplication.design.TabFragment;
+import com.appunite.rx.subjects.CacheSubject;
+import com.example.admin.rxjavatestapplication.dao.SpotifyResponseDao;
+import com.example.admin.rxjavatestapplication.gson.AndroidUnderscoreNamingStrategy;
+import com.example.admin.rxjavatestapplication.gson.ImmutableListDeserializer;
+import com.example.admin.rxjavatestapplication.helpers.CacheProvider;
+import com.example.admin.rxjavatestapplication.helpers.DiskCacheCreator;
 import com.example.admin.rxjavatestapplication.schedulers.ObserveOnScheduler;
 import com.example.admin.rxjavatestapplication.schedulers.SubscribeOnScheduler;
+import com.google.common.collect.ImmutableList;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.squareup.picasso.Picasso;
+
+import java.io.File;
+import java.lang.reflect.Type;
 
 import javax.annotation.Nonnull;
 import javax.inject.Named;
@@ -83,6 +94,27 @@ public class MainApplication extends Application {
                     .indicatorsEnabled(BuildConfig.DEBUG)
                     .loggingEnabled(BuildConfig.DEBUG)
                     .build();
+        }
+
+        @Provides
+        @Singleton
+        Gson getGson() {
+            return new GsonBuilder()
+                    .registerTypeAdapter(ImmutableList.class, new ImmutableListDeserializer())
+                    .setFieldNamingStrategy(new AndroidUnderscoreNamingStrategy())
+                    .create();
+        }
+
+        @Provides
+        @Singleton
+        CacheProvider getCacheProvider(final @Named("Application") Context context, final Gson gson) {
+            return new CacheProvider() {
+                @Nonnull
+                @Override
+                public <T> CacheSubject.CacheCreator<T> getCacheCreatorForKey(@Nonnull String key, @Nonnull Type type) {
+                    return new DiskCacheCreator<>(gson, type, new File(context.getCacheDir(), key + ".txt"));
+                }
+            };
         }
     }
 }

@@ -40,7 +40,7 @@ public class DetailsPresenter {
     }
 
     @Nonnull
-    public Observable<ResponseOrError<SpotifyResponse>> itemsDaoObservable(String offset) {
+    public Observable<SpotifyResponseDao.CachedResult> itemsDaoObservable(String offset) {
         return this.spotifyResponseDao.clickedItemObservable(offset);
     }
 
@@ -57,11 +57,11 @@ public class DetailsPresenter {
                                       @Nonnull final String offset) {
 
             itemsDaoObservable(offset)
-                    .compose(ResponseOrError.<SpotifyResponse>onlySuccess())
-                    .map(new Func1<SpotifyResponse, ImmutableList<AdapterItemDetails>>() {
+//                    .compose(ResponseOrError.<SpotifyResponse>onlySuccess())
+                    .map(new Func1<SpotifyResponseDao.CachedResult, ImmutableList<AdapterItemDetails>>() {
                         @Override
-                        public ImmutableList<AdapterItemDetails> call(SpotifyResponse spotifyResponse) {
-                            return ImmutableList.copyOf(Lists.transform(spotifyResponse.getTracks().getItems(),
+                        public ImmutableList<AdapterItemDetails> call(SpotifyResponseDao.CachedResult spotifyResponse) {
+                            return ImmutableList.copyOf(Lists.transform(spotifyResponse.getResponse().getTracks().getItems(),
                                     new Function<Item, AdapterItemDetails>() {
                                         @Nullable
                                         @Override
