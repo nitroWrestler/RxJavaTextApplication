@@ -12,6 +12,7 @@ import com.appunite.rx.ResponseOrError;
 import com.appunite.rx.functions.BothParams;
 import com.example.admin.rxjavatestapplication.dao.SpotifyResponseDao;
 import com.example.admin.rxjavatestapplication.detector.SimpleDetector;
+import com.example.admin.rxjavatestapplication.helpers.CachedResult;
 import com.example.admin.rxjavatestapplication.model.Item;
 import com.example.admin.rxjavatestapplication.model.SpotifyResponse;
 import com.google.common.base.Function;
@@ -41,10 +42,10 @@ public class RetrofitPresenter {
 
         immutableListObservable = itemsDaoObservable()
 //                .compose(ResponseOrError.<SpotifyResponse>onlySuccess())
-                .flatMap(new Func1<SpotifyResponseDao.CachedResult, Observable<ImmutableList<AdapterItem>>>() {
+                .flatMap(new Func1<CachedResult, Observable<ImmutableList<AdapterItem>>>() {
                     @Override
-                    public Observable<ImmutableList<AdapterItem>> call(final SpotifyResponseDao.CachedResult spotifyResponse) {
-                        return Observable.just(ImmutableList.copyOf(Lists.transform(spotifyResponse.getResponse().getTracks().getItems(),
+                    public Observable<ImmutableList<AdapterItem>> call(final CachedResult spotifyResponse) {
+                        ImmutableList<AdapterItem> value = ImmutableList.copyOf(Lists.transform(spotifyResponse.getResponse().getTracks().getItems(),
                                 new Function<Item, AdapterItem>() {
                                     @Nullable
                                     @Override
@@ -59,7 +60,9 @@ public class RetrofitPresenter {
                                                 item.getAlbum().getImages().get(0).getUrl()
                                         );
                                     }
-                                })));
+                                }));
+                        return Observable.just(value)
+                                ;
                     }
                 })
                 .compose(ObservableExtensions.<ImmutableList<AdapterItem>>behaviorRefCount());
@@ -71,7 +74,7 @@ public class RetrofitPresenter {
     }
 
     @Nonnull
-    public Observable<SpotifyResponseDao.CachedResult> itemsDaoObservable() {
+    public Observable<CachedResult> itemsDaoObservable() {
         return this.spotifyResponseDao.spotifyItemsObservable();
     }
 

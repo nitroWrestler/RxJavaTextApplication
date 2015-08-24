@@ -1,9 +1,5 @@
 package com.example.admin.rxjavatestapplication.dao;
 
-import android.content.SharedPreferences;
-import android.support.annotation.Nullable;
-import android.util.Log;
-
 import com.appunite.rx.ResponseOrError;
 import com.appunite.rx.android.MyAndroidSchedulers;
 import com.appunite.rx.operators.MoreOperators;
@@ -11,6 +7,7 @@ import com.appunite.rx.operators.OperatorMergeNextToken;
 import com.appunite.rx.subjects.CacheSubject;
 import com.example.admin.rxjavatestapplication.MyRetroFit;
 import com.example.admin.rxjavatestapplication.helpers.CacheProvider;
+import com.example.admin.rxjavatestapplication.helpers.CachedResult;
 import com.example.admin.rxjavatestapplication.model.Item;
 import com.example.admin.rxjavatestapplication.model.SpotifyResponse;
 import com.example.admin.rxjavatestapplication.model.Tracks;
@@ -18,7 +15,6 @@ import com.example.admin.rxjavatestapplication.schedulers.ObserveOnScheduler;
 import com.example.admin.rxjavatestapplication.schedulers.SubscribeOnScheduler;
 import com.google.common.collect.ImmutableList;
 
-import java.lang.reflect.Type;
 import java.util.List;
 
 import javax.annotation.Nonnull;
@@ -27,8 +23,6 @@ import javax.inject.Inject;
 import rx.Observable;
 import rx.Observer;
 import rx.Scheduler;
-import rx.android.schedulers.AndroidSchedulers;
-import rx.functions.Action1;
 import rx.functions.Func1;
 import rx.functions.Func2;
 import rx.subjects.PublishSubject;
@@ -41,32 +35,12 @@ public class SpotifyResponseDao {
     private final PublishSubject<Object> loadMoreSubject = PublishSubject.create();
     @Nonnull
     private final MyRetroFit myRetroFit;
-    @Nonnull
-    private final Scheduler observeOnScheduler;
-    @Nonnull
-    private final Scheduler subscribeOnScheduler;
+//    @Nonnull
+//    private final Scheduler observeOnScheduler;
+//    @Nonnull
+//    private final Scheduler subscribeOnScheduler;
 
     int offset = 0;
-
-    public class CachedResult {
-        private final @Nullable SpotifyResponse response;
-        private final @Nullable Throwable throwable;
-
-        public CachedResult(@Nullable SpotifyResponse response, @Nullable Throwable throwable) {
-            this.response = response;
-            this.throwable = throwable;
-        }
-
-        @Nullable
-        public SpotifyResponse getResponse() {
-            return response;
-        }
-
-        @Nullable
-        public Throwable getThrowable() {
-            return throwable;
-        }
-    }
 
     @Inject
     public SpotifyResponseDao(@Nonnull MyRetroFit retroFit,
@@ -75,8 +49,8 @@ public class SpotifyResponseDao {
                               @Nonnull final CacheProvider cacheProvider) {
 
         myRetroFit = retroFit;
-        this.observeOnScheduler = observeOnScheduler;
-        this.subscribeOnScheduler = subscribeOnScheduler;
+//        this.observeOnScheduler = observeOnScheduler;
+//        this.subscribeOnScheduler = subscribeOnScheduler;
 
         final OperatorMergeNextToken<SpotifyResponse, Object> mergeSpotifyResponseNextToken = OperatorMergeNextToken
                 .create(new Func1<SpotifyResponse, Observable<SpotifyResponse>>() {
@@ -115,7 +89,7 @@ public class SpotifyResponseDao {
                             // save to file
                             return Observable.just(new CachedResult(response.data(), null));
                         } else {
-                            // try to read from file and return cached result
+//                         try to read from file and return cached result
                             return null;
                         }
                     }

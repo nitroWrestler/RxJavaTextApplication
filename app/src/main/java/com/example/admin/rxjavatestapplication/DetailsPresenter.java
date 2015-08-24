@@ -4,6 +4,7 @@ package com.example.admin.rxjavatestapplication;
 import com.appunite.rx.ObservableExtensions;
 import com.appunite.rx.ResponseOrError;
 import com.example.admin.rxjavatestapplication.dao.SpotifyResponseDao;
+import com.example.admin.rxjavatestapplication.helpers.CachedResult;
 import com.example.admin.rxjavatestapplication.model.Item;
 import com.example.admin.rxjavatestapplication.model.SpotifyResponse;
 import com.google.common.base.Function;
@@ -40,7 +41,7 @@ public class DetailsPresenter {
     }
 
     @Nonnull
-    public Observable<SpotifyResponseDao.CachedResult> itemsDaoObservable(String offset) {
+    public Observable<CachedResult> itemsDaoObservable(String offset) {
         return this.spotifyResponseDao.clickedItemObservable(offset);
     }
 
@@ -58,9 +59,9 @@ public class DetailsPresenter {
 
             itemsDaoObservable(offset)
 //                    .compose(ResponseOrError.<SpotifyResponse>onlySuccess())
-                    .map(new Func1<SpotifyResponseDao.CachedResult, ImmutableList<AdapterItemDetails>>() {
+                    .map(new Func1<CachedResult, ImmutableList<AdapterItemDetails>>() {
                         @Override
-                        public ImmutableList<AdapterItemDetails> call(SpotifyResponseDao.CachedResult spotifyResponse) {
+                        public ImmutableList<AdapterItemDetails> call(CachedResult spotifyResponse) {
                             return ImmutableList.copyOf(Lists.transform(spotifyResponse.getResponse().getTracks().getItems(),
                                     new Function<Item, AdapterItemDetails>() {
                                         @Nullable
